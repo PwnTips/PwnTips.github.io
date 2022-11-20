@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Chromium 和 v8 的一些参数"（WIP）
+title: "Chromium 和 v8 的一些参数（WIP)"
 ---
 
 # V8 参数
