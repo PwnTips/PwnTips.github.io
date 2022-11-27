@@ -46,9 +46,15 @@ remote_theme: jekyll/minima
 plugins:
   - jekyll-remote-theme
   - jekyll-feed
+  - jekyll-relative-links
+
 
 minima:
   skin: solarized
+
+relative_links:
+  enabled:     true
+  collections: true
 
 # Exclude from processing.
 # The following items will not be processed, by default.
