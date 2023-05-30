@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "渐进式的开发一个 fuzzer (WIP)"
+title: "v8 资料汇总"
 ---
 
 ## V8 资料汇总
@@ -9,7 +9,7 @@ v8 的资料虽然很多，但是很多是非官方的资料，或者没有一�
 
 ### 12.12.11 更新
 
-![[Pasted image 20221211203015.png]]
+![截图](Pasted image 20221211203015.png)
 From: https://groups.google.com/g/v8-dev/c/J-lbjGeu6Yw
 
 - The best way to start with V8 is to play around "hello world" at [https://v8.dev/docs/embed](https://v8.dev/docs/embed) to find out the basics.   -- 这篇是 v8 团队发的官方文章，大体上是讲怎么把 v8 当作嵌入式解释器使用，中间讲了很多 v8 的基本概念，入门必读。
