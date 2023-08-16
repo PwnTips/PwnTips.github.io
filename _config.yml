@@ -47,6 +47,7 @@ plugins:
   - jekyll-remote-theme
   - jekyll-feed
   - jekyll-relative-links
+  - jekyll-sitemap
 
 
 minima:
