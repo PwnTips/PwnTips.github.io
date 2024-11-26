@@ -75,9 +75,9 @@ depot_tools 是开发 Chromium 所需的一系列工具、脚本的集合。
 
 depot_tools 需要挂代理才能正常运行，它是多个工具、脚本的集合，代理设置也需要配置多项。
 
-#### CPID
+#### CIPD
 
-CPID 是一个包管理工具，depot_tools 用它来下载依赖项，它能够读取环境变量中的代理设置。
+CIPD 是一个包管理工具，depot_tools 用它来下载依赖项，它能够读取环境变量中的代理设置。
 
 ```bash
 > $env:HTTP_PRXOY='http://127.0.0.1:8001'
@@ -90,7 +90,6 @@ CPID 是一个包管理工具，depot_tools 用它来下载依赖项，它能够
 > $env:HTTP_PRXOY=''
 > $env:HTTPS_PROXY=''
 ```
-
 #### Git
 
 Git 也支持从环境变量读取代理配置，无需额外配置。
@@ -109,6 +108,7 @@ Git 也支持从环境变量读取代理配置，无需额外配置。
 > git config --global --unset-all https.proxy
 ```
 
+还可以参考 https://gist.github.com/evantoli/f8c23a37eb3558ab8765 的办法，仅对 googlesource.com 这个域名设置代理，这样就可以一次设置永久使用了。(域名可能发生变化，以你的实际情况为准)
 #### gsutil
 
 gsutil 是 Google 云存储的客户端，被 depot_tools 用来下载依赖，也需要额外配置代理。
