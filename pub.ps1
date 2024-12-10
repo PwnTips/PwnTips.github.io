@@ -7,4 +7,5 @@ cp -r -Force _site/* .
 rm -r -Force _site/
 touch .nojekyll
 git add .
+git reset pub.ps1
 git commit -m 'publish new post'
