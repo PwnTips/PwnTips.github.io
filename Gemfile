@@ -37,3 +37,5 @@ gem "webrick", "~> 1.7"
 gem "jekyll-remote-theme", "~> 0.4.3"
 
 gem 'jekyll-relative-links'
+
+gem 'jekyll-sitemap'
