@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>构建 Chromium（墙内） | PwnTips</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="构建 Chromium（墙内）" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="本文记录在 Windows 系统构建 Chromium 的过程，方法完全抄袭自 官方文档，仅加入一些代理配置相关的内容。" />
+<meta property="og:description" content="本文记录在 Windows 系统构建 Chromium 的过程，方法完全抄袭自 官方文档，仅加入一些代理配置相关的内容。" />
+<link rel="canonical" href="https://pwntips.github.io/2022/03/20/build-chromium.html" />
+<meta property="og:url" content="https://pwntips.github.io/2022/03/20/build-chromium.html" />
+<meta property="og:site_name" content="PwnTips" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-03-20T00:00:00+08:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="构建 Chromium（墙内）" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-03-20T00:00:00+08:00","datePublished":"2022-03-20T00:00:00+08:00","description":"本文记录在 Windows 系统构建 Chromium 的过程，方法完全抄袭自 官方文档，仅加入一些代理配置相关的内容。","headline":"构建 Chromium（墙内）","mainEntityOfPage":{"@type":"WebPage","@id":"https://pwntips.github.io/2022/03/20/build-chromium.html"},"url":"https://pwntips.github.io/2022/03/20/build-chromium.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://pwntips.github.io/feed.xml" title="PwnTips" /><script async src="https://www.googletagmanager.com/gtag/js?id=G-LDS6Z1TT65"></script>
+<script>
+  window['ga-disable-G-LDS6Z1TT65'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){window.dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-LDS6Z1TT65');
+</script>
+
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">PwnTips</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">构建 Chromium（墙内）</h1>
+    <p class="post-meta"><time class="dt-published" datetime="2022-03-20T00:00:00+08:00" itemprop="datePublished">
+        Mar 20, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>本文记录在 Windows 系统构建 Chromium 的过程，方法完全抄袭自 <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/windows_build_instructions.md">官方文档</a>，仅加入一些代理配置相关的内容。</p>
+
+<h2 id="致谢">致谢</h2>
+
+<p>多谢 GFW，把简单的事情变得复杂，让我们人生多了一些历练的机会🙃。</p>
+
+<h2 id="visual-studio">Visual Studio</h2>
+
+<ul>
+  <li>至少需要 VS 2017，推荐使用 VS 2019，我用的版本是 VS 2019 Version 16.11.9。</li>
+  <li>需要装 Desktop development with C++、MFC、ATL 这几个组件</li>
+  <li>Windows SDK 版本要高于 10.0.19041，对于 VS 2019 来说默认就是满足的，不放心的话构建前可以先更新下。</li>
+  <li>如果是编译 2019 年左右的旧版本，首选 VS 2017，我在用 VS 2019 编译旧版本时遇到了兼容问题，可以安装多个版本，构建时显示指定使用的版本。</li>
+</ul>
+
+<h2 id="depot_tools">depot_tools</h2>
+
+<p>depot_tools 是开发 Chromium 所需的一系列工具、脚本的集合。</p>
+
+<h3 id="安装">安装</h3>
+
+<ul>
+  <li>下载 <a href="https://storage.googleapis.com/chrome-infra/depot_tools.zip">https://storage.googleapis.com/chrome-infra/depot_tools.zip</a>。</li>
+  <li>解压到任意位置，例如 d:/depot_tools。<br />
+多年的采坑经验告诉我，解压路径层级少一点，不要超长，不要包含中文、空格，就不容易遇到奇怪的问题。</li>
+  <li>解压完成后，要检查一下 depot_tools 目录，确认存在 .git 子目录，如果不存需要换一个解压工具，例如 7z。</li>
+</ul>
+
+<h3 id="配置-git-可选">配置 Git （可选）</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 提交代码需要</span>
+<span class="o">&gt;</span> git config <span class="nt">--global</span> user.name <span class="s2">"ReplaceWithYourUserName"</span>
+<span class="o">&gt;</span> git config <span class="nt">--global</span> user.email <span class="s2">"ReplaceWithYourEmail@chromium.org"</span>
+<span class="c"># git 自动转换换行回车</span>
+<span class="o">&gt;</span> git config <span class="nt">--global</span> core.autocrlf <span class="nb">false</span>
+<span class="c"># git 不存储文件权限</span>
+<span class="o">&gt;</span> git config <span class="nt">--global</span> core.filemode <span class="nb">false</span>
+<span class="c"># 使用 rebase 合并拉取的代码</span>
+<span class="o">&gt;</span> git config <span class="nt">--global</span> branch.autosetuprebase always
+</code></pre></div></div>
+
+<h3 id="环境变量">环境变量</h3>
+
+<ul>
+  <li>将 depot_tools 目录加到 PATH，要确保加到 Python 的安装目录前，例如 PATH 的第一项。这会使 depot_tools 目录中的 Python 替代本地安装的 Python，如果你修改的是持久化的环境变量配置，用完后要改回去。</li>
+  <li>DEPOT_TOOLS_WIN_TOOLCHAIN 设置为 0，使用本地的 Visual Studio 工具构建 Chrome</li>
+  <li>(可选) vs2019_install/vs2017_install/vs2022_install: 设置为 Visual Studio 的安装目录。
+depot_tools 会自动搜索 Visual Studio 安装目录，如果对搜索结果不满意可以用此环境变量显示指定版本和安装目录
+例如，机器上安装了多个 Visual Studio，默认搜索到的可能是 VS 2019，如果你想用 VS 2022 的话，就可以指定 vs2022_install 环境变量。</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 这个 URL 目前不需要挂代理，需要代理可以改成:</span>
+<span class="c"># Invoke-WebRequest -URI `</span>
+<span class="c">#   https://storage.googleapis.com/chrome-infra/depot_tools.zip `</span>
+<span class="c">#   -Proxy "http://127.0.0.1:8001" -OutFile ./depot_tools.zip</span>
+<span class="o">&gt;</span> Invoke-WebRequest <span class="nt">-URI</span> <span class="sb">`</span>
+<span class="o">&gt;</span>   https://storage.googleapis.com/chrome-infra/depot_tools.zip <span class="sb">`</span>
+<span class="o">&gt;</span>   <span class="nt">-OutFile</span> ./depot_tools.zip
+<span class="c"># 解压，需要安装7zip</span>
+<span class="o">&gt;</span> 7z x .<span class="se">\d</span>epot_tools.zip <span class="nt">-odepot_tools</span>
+<span class="c"># 检查.git子目录存在</span>
+<span class="o">&gt;</span> <span class="nb">ls</span> .<span class="se">\d</span>epot_tools<span class="se">\.</span>git
+<span class="o">&gt;</span> <span class="nb">cd</span> .<span class="se">\d</span>epot_tools<span class="se">\</span>
+<span class="c"># 修改环境变量, 仅当前会话生效</span>
+<span class="o">&gt;</span> <span class="nv">$env</span>:PATH<span class="o">=</span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/;</span><span class="nv">$env</span><span class="s2">:PATH"</span>
+<span class="o">&gt;</span> <span class="nv">$env</span>:DEPOT_TOOLS_WIN_TOOLCHAIN<span class="o">=</span>0
+<span class="c"># $env:vs2019_install= `</span>
+<span class="c">#   "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community"</span>
+</code></pre></div></div>
+
+<h3 id="配置代理">配置代理</h3>
+
+<p>depot_tools 需要挂代理才能正常运行，它是多个工具、脚本的集合，代理设置也需要配置多项。</p>
+
+<h4 id="cipd">CIPD</h4>
+
+<p>CIPD 是一个包管理工具，depot_tools 用它来下载依赖项，它能够读取环境变量中的代理设置。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> <span class="nv">$env</span>:HTTP_PRXOY<span class="o">=</span><span class="s1">'http://127.0.0.1:8001'</span>
+<span class="o">&gt;</span> <span class="nv">$env</span>:HTTPS_PRXOY<span class="o">=</span><span class="s1">'http://127.0.0.1:8001'</span>
+</code></pre></div></div>
+
+<p>用完后清除代理</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> <span class="nv">$env</span>:HTTP_PRXOY<span class="o">=</span><span class="s1">''</span>
+<span class="o">&gt;</span> <span class="nv">$env</span>:HTTPS_PROXY<span class="o">=</span><span class="s1">''</span>
+</code></pre></div></div>
+<h4 id="git">Git</h4>
+
+<p>Git 也支持从环境变量读取代理配置，无需额外配置。</p>
+
+<p>如果环境变量不生效的话，也可以用下面的命令显示给 Git 指定代理。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> git config <span class="nt">--global</span> http.proxy <span class="s2">"http://127.0.0.1:8001"</span>
+<span class="o">&gt;</span> git config <span class="nt">--global</span> https.proxy <span class="s2">"http://127.0.0.1:8001"</span>
+</code></pre></div></div>
+
+<p>用完后清除代理</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> git config <span class="nt">--global</span> <span class="nt">--unset-all</span> http.proxy
+<span class="o">&gt;</span> git config <span class="nt">--global</span> <span class="nt">--unset-all</span> https.proxy
+</code></pre></div></div>
+
+<p>还可以参考 https://gist.github.com/evantoli/f8c23a37eb3558ab8765 的办法，仅对 googlesource.com 这个域名设置代理，这样就可以一次设置永久使用了。(域名可能发生变化，以你的实际情况为准)</p>
+<h4 id="gsutil">gsutil</h4>
+
+<p>gsutil 是 Google 云存储的客户端，被 depot_tools 用来下载依赖，也需要额外配置代理。</p>
+
+<ul>
+  <li>创建如下.boto文件
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[Boto]
+proxy = 127.0.0.1
+proxy_port = 8001
+proxy_type = http
+</code></pre></div>    </div>
+  </li>
+  <li>设置环境变量 NO_AUTH_BOTO_CONFIG，为 .boto 文件的全路径
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> <span class="nv">$env</span>:NO_AUTH_BOTO_CONFIG<span class="o">=</span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/.boto"</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h3 id="初始化">初始化</h3>
+
+<p>设置好代理后，第一次运行 gclient，gclient 会自动安装所需的依赖。如果代理设置的都没有问题的话，稍等一会就会看到 gclient 输出使用帮助。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> gclient
+WARNING: Your metrics.cfg file was invalid or nonexistent. A new one will be created.
+Usage: gclient.py &lt;<span class="nb">command</span><span class="o">&gt;</span> <span class="o">[</span>options]
+
+Meta checkout dependency manager <span class="k">for </span>Git.
+
+Commands are:
+  config   creates a .gclient file <span class="k">in </span>the current directory
+  diff     displays <span class="nb">local </span>diff <span class="k">for </span>every dependencies
+  fetch    fetches upstream commits <span class="k">for </span>all modules
+  flatten  flattens the solutions into a single DEPS file
+  getdep   gets revision information and variable values from a DEPS file
+  <span class="nb">grep     </span>greps through git repos managed by gclient
+  <span class="nb">help     </span>prints list of commands or <span class="nb">help </span><span class="k">for </span>a specific <span class="nb">command
+  </span>metrics  reports, and optionally modifies, the status of metric collection
+  pack     generates a patch which can be applied at the root of the tree
+  recurse  operates <span class="o">[</span><span class="nb">command </span>args ...] on all the dependencies
+  revert   reverts all modifications <span class="k">in </span>every dependencies
+  revinfo  outputs revision info mapping <span class="k">for </span>the client and its dependencies
+  root     outputs the solution root <span class="o">(</span>or current <span class="nb">dir </span><span class="k">if </span>there isn<span class="s1">'t one)
+  runhooks runs hooks for files that have been modified in the local working copy
+  setdep   modifies dependency revisions and variable values in a DEPS file
+  status   shows modification status for every dependencies
+  sync     checkout/update all modules
+  validate validates the .gclient and DEPS syntax
+  verify   verifies the DEPS file deps are only from allowed_hosts
+
+Options:
+  --version             show program'</span>s version number and <span class="nb">exit</span>
+  <span class="nt">-h</span>, <span class="nt">--help</span>            show this <span class="nb">help </span>message and <span class="nb">exit</span>
+  <span class="nt">-j</span> JOBS, <span class="nt">--jobs</span><span class="o">=</span>JOBS  Specify how many SCM commands can run <span class="k">in </span>parallel<span class="p">;</span>
+                        defaults to 12 on this machine
+  <span class="nt">-v</span>, <span class="nt">--verbose</span>         Produces additional output <span class="k">for </span>diagnostics. Can be
+                        used up to three <span class="nb">times </span><span class="k">for </span>more logging info.
+  <span class="nt">--gclientfile</span><span class="o">=</span>CONFIG_FILENAME
+                        Specify an alternate .gclient file
+  <span class="nt">--spec</span><span class="o">=</span>SPEC           create a gclient file containing the provided string.
+                        Due to Cygwin/Python brokenness, it can<span class="s1">'t contain any
+                        newlines.
+  --no-nag-max          Ignored for backwards compatibility.
+</span></code></pre></div></div>
+
+<hr />
+
+<p><strong>ℹ️NOTE</strong></p>
+
+<ul>
+  <li>文档要求在 cmd.exe 中构建 Chromium，但我介绍的都是在 PWSH 中运行的方法，我使用的 PWSH 版本如下：
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> <span class="nv">$PSVersionTable</span>
+Name                           Value
+<span class="nt">----</span>                           <span class="nt">-----</span>
+PSVersion                      7.2.1
+PSEdition                      Core
+GitCommitId                    7.2.1
+OS                             Microsoft Windows 10.0.19043
+Platform                       Win32NT
+PSCompatibleVersions           <span class="o">{</span>1.0, 2.0, 3.0, 4.0…<span class="o">}</span>
+PSRemotingProtocolVersion      2.3
+SerializationVersion           1.1.0.1
+WSManStackVersion              3.0
+</code></pre></div>    </div>
+  </li>
+  <li>整个过程中需要走代理的流量还是很大的，如果你使用的是按流量计费的代理，代理提供商一般有提供不记流量的低速节点。</li>
+  <li>附上 depot 的<a href="https://youglish.com/pronounce/depot/english/us?">读音</a></li>
+</ul>
+
+<hr />
+
+<h2 id="下载chromium源码">下载Chromium源码</h2>
+
+<ul>
+  <li>在任意位置，新建 Chromium 目录，例如 D:/Chromium。</li>
+  <li>切换到新创建的目录，使用 fetch 命令下载代码，网络不好的话，可以指定 --no-history 命令行，忽略 commit 历史，减小了要下载文件的体积，命令执行成功后代码在 src 子目录</li>
+</ul>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> <span class="nb">mkdir </span>chromium <span class="o">&amp;&amp;</span> <span class="nb">cd </span>chromium
+<span class="o">&gt;</span> fetch <span class="nt">--no-history</span> chromium
+</code></pre></div></div>
+
+<p>看到代码拉取正常开始以后，就可以去看一季电视剧了😂。不知道是不是我的代理网络太慢了，我用了 5 个小时左右才完成。</p>
+
+<h2 id="构建">构建</h2>
+
+<ul>
+  <li>确认磁盘有足够的空间，我这里构建完成后 out/Default 目录占用 52 GiB，depot_tools + chromium 总共占用 74 GiB 左右</li>
+  <li><code class="language-plaintext highlighter-rouge">cd src</code> 切换到 src 目录</li>
+  <li><code class="language-plaintext highlighter-rouge">gn args out/Default</code> ，在弹出的记事本中填入下面的配置，保存后关闭记事本
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>is_component_build = true
+enable_nacl = false
+v8_optimized_debug = false
+</code></pre></div>    </div>
+  </li>
+  <li>等待 GN 执行，GN 会在 out/Default 目录，生成构建所需的文件</li>
+  <li>(可选) 把 chromium 目录，加入到杀毒软件的白名单，防止杀毒软件在构建过程中不断扫描构建产物，拖慢构建速度</li>
+  <li><code class="language-plaintext highlighter-rouge">autoninja -C out\Default chrome</code> 用 ninja 构建 chrome，又需要几个小时。</li>
+  <li>构建期间已经不再需要代理了。</li>
+</ul>
+
+<p>编译完成后，可以在 out/Default 目录找到编译好的 chrome.exe。</p>
+
+<p>默认编译出来的是 Debug 版，要编译 Release 版的话，配置改成：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>is_component_build = true
+is_debug = false
+enable_nacl = false
+dcheck_always_on = true
+</code></pre></div></div>
+
+<p>Debug 版和 Release 版可以在两个不同的目录中共存，例如把两个版本分别放到 out/Default 和 out/Release。是否可以同时编译，这个我还没试过，有需求的读者可以测试一下。</p>
+
+<hr />
+
+<p><strong>ℹ️NOTE</strong></p>
+
+<ul>
+  <li>Chromium 构建用到了 GN 和 Ninja 两个构建工具。<br />
+GN 属于元构建工具，它并不实际执行构建，而是输出 Ninja、VS 等工具使用的描述文件，GN 的优点是描述文件适合手工编写。 <br />
+Ninja 则侧重供底层构建能力，提升构建速度，一般配合 GN、CMake 之类的元构建工具使用。</li>
+  <li>GN 仅需运行一次，之后仅执行 Ninja 命令即可，Ninja 会在必要时自动调用 GN。</li>
+</ul>
+
+<hr />
+
+<h2 id="生成-visual-studio-解决方案-可选">生成 Visual Studio 解决方案 （可选）</h2>
+
+<p>可以用 <code class="language-plaintext highlighter-rouge">gn gen --ide=vs</code> 生成包含所有代码的 VS 解决方案，但是这样生成的解决方案太大了，使用起来很不方便，推荐用 --filter 和 --no-deps 命令行限定解决方案包含的范围。</p>
+
+<p>例如：用如下命令生成包含 v8、base 和 blink 的解决方案 out/Default/v8_blink.sln。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> gn gen <span class="nt">--ide</span><span class="o">=</span>vs <span class="nt">--filters</span><span class="o">=</span><span class="s1">'//v8/*;//base/*;//third_party//blink/*'</span> <span class="sb">`</span>
+  <span class="nt">--no-deps</span> <span class="nt">--sln</span><span class="o">=</span>blink_v8 out<span class="se">\D</span>efault
+</code></pre></div></div>
+
+<p>推荐阅读<a href="https://gn.googlesource.com/gn/+/master/docs/reference.md#cmd_gen"> GN 的帮助</a> 和 <a href="https://www.chromium.org/developers/how-tos/visualstudio-tricks/">VisualStudio Tricks</a> 了解更多技巧。</p>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = '';
+      this.page.identifier = 'https://pwntips.github.io/2022/03/20/build-chromium.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://PwnTips.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2022/03/20/build-chromium.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="https://pwntips.github.io/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Tips &amp; Tricks</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>PlantUML 源码备份 | PwnTips</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="PlantUML 源码备份" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="本文用来备份博客中出现的 PlantUML 图的源码。" />
+<meta property="og:description" content="本文用来备份博客中出现的 PlantUML 图的源码。" />
+<link rel="canonical" href="https://pwntips.github.io/2022/06/11/plantuml-source-code.html" />
+<meta property="og:url" content="https://pwntips.github.io/2022/06/11/plantuml-source-code.html" />
+<meta property="og:site_name" content="PwnTips" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-11T00:00:00+08:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="PlantUML 源码备份" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-11T00:00:00+08:00","datePublished":"2022-06-11T00:00:00+08:00","description":"本文用来备份博客中出现的 PlantUML 图的源码。","headline":"PlantUML 源码备份","mainEntityOfPage":{"@type":"WebPage","@id":"https://pwntips.github.io/2022/06/11/plantuml-source-code.html"},"url":"https://pwntips.github.io/2022/06/11/plantuml-source-code.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://pwntips.github.io/feed.xml" title="PwnTips" /><script async src="https://www.googletagmanager.com/gtag/js?id=G-LDS6Z1TT65"></script>
+<script>
+  window['ga-disable-G-LDS6Z1TT65'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){window.dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-LDS6Z1TT65');
+</script>
+
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">PwnTips</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">PlantUML 源码备份</h1>
+    <p class="post-meta"><time class="dt-published" datetime="2022-06-11T00:00:00+08:00" itemprop="datePublished">
+        Jun 11, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>本文用来备份博客中出现的 PlantUML 图的源码。</p>
+
+<h2 id="cve-2021-30551">CVE-2021-30551</h2>
+
+<pre><code class="language-plantuml-svg">@startuml
+map transitions_1 {
+corrupted_prop =&gt;
+}
+
+map transitions_2 {
+corrupted_prop =&gt;
+}
+
+map map_1 {
+transitions *-&gt; transitions_1
+descriptors =&gt; [regular_prop]
+}
+
+map transitions_0 {
+regular_prop =&gt;
+}
+
+map map_2 {
+transitions *-&gt; transitions_2
+descriptors =&gt; [regular_prop, corrupted_prop]
+}
+
+map object_1 {
+map *-&gt; map_2
+}
+
+map map_3 {
+transitions =&gt; null
+descriptors =&gt; [regular_prop, corrupted_prop, corrupted_prop]
+}
+
+map object_2 {
+map *-&gt; map_3
+}
+
+map map_0 {
+transitions *-&gt; transitions_0
+descriptors =&gt; []
+}
+
+transitions_0::regular_prop ==&gt; map_1
+transitions_1::corrupted_prop ==&gt; map_2
+transitions_2::corrupted_prop ==&gt; map_3
+@enduml
+</code></pre>
+
+<pre><code class="language-plantuml-svg">@startuml
+
+package deprecated {
+map transitions_1 {
+corrupted_prop =&gt;
+}
+
+map transitions_2 {
+corrupted_prop =&gt;
+}
+
+map map_1 {
+transitions *-&gt; transitions_1
+descriptors =&gt; [regular_prop]
+}
+
+map map_2 {
+transitions *-&gt; transitions_2
+descriptors =&gt; [regular_prop, corrupted_prop]
+}
+
+
+map map_3 {
+transitions =&gt; null
+descriptors =&gt; [regular_prop, corrupted_prop, corrupted_prop]
+}
+
+
+transitions_1::corrupted_prop ==&gt; map_2
+transitions_2::corrupted_prop ==&gt; map_3
+}
+
+map object_2 {
+map *-&gt; deprecated.map_3
+}
+
+map transitions_3 {
+regular_prop =&gt;
+}
+
+map transitions_4 {
+corrupted_prop =&gt;
+}
+
+map transitions_5 {
+corrupted_prop =&gt;
+}
+
+map map_4 {
+transitions *-&gt; transitions_4
+descriptors =&gt; [regular_prop]
+}
+
+map map_5 {
+transitions *-&gt; transitions_5
+descriptors =&gt; [regular_prop, corrupted_prop]
+}
+
+map map_6 {
+transitions =&gt; null
+descriptors =&gt; [regular_prop, corrupted_prop, corrupted_prop]
+}
+
+map map_0 {
+transitions *-&gt; transitions_3
+descriptors =&gt; []
+}
+
+map object_1 {
+map *-&gt; map_6
+}
+
+
+
+transitions_3::regular_prop ==&gt; map_4
+transitions_4::corrupted_prop ==&gt; map_5
+transitions_5::corrupted_prop ==&gt; map_6
+@enduml
+</code></pre>
+
+<h2 id="cve-2021-37975">CVE-2021-37975</h2>
+
+<pre><code class="language-plantuml-svg">object k_0
+object k_1
+object k_2
+object k_3
+
+map retMap {
+}
+
+map m_3 {
+k_2 =&gt;
+}
+
+map m_2 {
+k_2 =&gt;
+k_1 =&gt;
+}
+
+map m_1 {
+k_1 =&gt;
+k_0 =&gt;
+}
+
+map m_0 {
+k_0 =&gt;
+initKey =&gt;
+}
+
+map map1 {
+initKey =&gt;
+k_3 =&gt;
+}
+
+object initKey
+
+map1::k_3 =&gt; retMap
+map1::initKey ==&gt; m_0
+m_0::k_0 ==&gt; m_1
+m_1::k_1 ==&gt; m_2
+m_2::k_2 ==&gt; m_3
+
+m_0::initKey ==&gt; k_0
+m_1::k_0 ==&gt; k_1
+m_2::k_1 ==&gt; k_2
+m_3::k_2 ==&gt; k_3
+</code></pre>
+
+<pre><code class="language-plantuml">@startuml
+
+object k_0
+object k_1
+object k_2
+object k_3
+
+object k_5
+object k_7
+object k_9
+object k_8
+
+map m_8 {
+k_8 =&gt;
+}
+
+map m_7 {
+k_7 =&gt;
+k_8 =&gt;
+}
+
+map m_5 {
+k_3 =&gt;
+}
+
+object v9
+
+map retMap {
+k_5 =&gt;
+k_3 =&gt;
+}
+
+map m_3 {
+k_2 =&gt;
+}
+
+map m_2 {
+k_2 =&gt;
+k_1 =&gt;
+}
+
+map m_1 {
+k_1 =&gt;
+k_0 =&gt;
+}
+
+map m_0 {
+k_0 =&gt;
+initKey =&gt;
+}
+
+map map1 {
+initKey =&gt;
+k_3 =&gt;
+k_7 =&gt;
+k_9 =&gt;
+}
+
+object initKey
+
+map1::k_3 =&gt; retMap
+map1::initKey ==&gt; m_0
+m_0::k_0 ==&gt; m_1
+m_1::k_1 ==&gt; m_2
+m_2::k_2 ==&gt; m_3
+
+m_0::initKey ==&gt; k_0
+m_1::k_0 ==&gt; k_1
+m_2::k_1 ==&gt; k_2
+
+m_3::k_2 ==&gt; k_3
+
+map1::k_7 ==&gt; m_7
+map1::k_9 ==&gt; v9
+
+retMap::k_5 ==&gt; m_5
+retMap::k_3 ==&gt; k_5
+
+m_5::k_3 ==&gt; k_7
+m_7::k_8 ==&gt; m_8
+m_7::k_7 ==&gt; k_8
+
+m_8::k_8 ==&gt; k_9
+
+@enduml
+</code></pre>
+
+<pre><code class="language-plantuml">@startuml
+
+object k_0
+object k_1
+object k_2
+object k_3
+
+object k_5
+object k_7
+object k_9
+object k_8
+
+object Roots
+
+map m_8 {
+k_8 =&gt;
+}
+
+map m_7 {
+k_7 =&gt;
+k_8 =&gt;
+}
+
+map m_5 {
+k_3 =&gt;
+}
+
+object v9
+
+map retMap {
+k_5 =&gt;
+k_3 =&gt;
+}
+
+map m_3 {
+k_2 =&gt;
+}
+
+map m_2 {
+k_2 =&gt;
+k_1 =&gt;
+}
+
+map m_1 {
+k_1 =&gt;
+k_0 =&gt;
+}
+
+map m_0 {
+k_0 =&gt;
+initKey =&gt;
+}
+
+map map1 {
+initKey =&gt;
+k_3 =&gt;
+k_7 =&gt;
+k_9 =&gt;
+}
+
+object initKey
+
+map1::k_3 =&gt; retMap : 5
+
+map1::initKey ==&gt; m_0
+
+m_0::k_0 ==&gt; m_1 : 8
+m_0::initKey ==&gt; k_0 : 8
+
+m_1::k_0 ==&gt; k_1 : 7
+m_1::k_1 ==&gt; m_2 : 7
+
+m_2::k_2 ==&gt; m_3 : 6
+m_2::k_1 ==&gt; k_2 : 6
+
+m_3::k_2 ==&gt; k_3 : 5
+
+map1::k_7 ==&gt; m_7 : 3
+map1::k_9 ==&gt; v9 : 0
+
+retMap::k_5 ==&gt; m_5 : 4
+retMap::k_3 ==&gt; k_5 : 4
+
+m_5::k_3 ==&gt; k_7 : 3
+
+m_7::k_8 ==&gt; m_8 : 2
+m_7::k_7 ==&gt; k_8 : 2
+
+m_8::k_8 ==&gt; k_9 : 1
+
+Roots ==&gt; map1 : *
+Roots ==&gt; initKey : *
+
+k_9 o.. map1::k_9
+
+k_8 o.. m_7::k_8
+k_8 o.. m_8::k_8
+
+k_7 o.. m_7::k_7
+k_7 o.. map1::k_7
+
+k_5 o.. retMap::k_5
+k_3 o.. map1::k_3
+k_3 o.. retMap::k_3
+k_2 o.. m_3::k_2
+k_1 o.. m_1::k_1
+k_0 o.. m_0::k_0
+
+initKey o.. map1::initKey
+
+@enduml
+</code></pre>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = '';
+      this.page.identifier = 'https://pwntips.github.io/2022/06/11/plantuml-source-code.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://PwnTips.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2022/06/11/plantuml-source-code.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="https://pwntips.github.io/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Tips &amp; Tricks</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

