@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>学习使用 AFL++ | PwnTips</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="学习使用 AFL++" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="目前热度最高的漏洞挖掘方法应该就是 Fuzzing 了，本文记录我学习使用 AFL++ 来 Fuzzing 开源的音频文件标签处理库 taglib 的过程。" />
+<meta property="og:description" content="目前热度最高的漏洞挖掘方法应该就是 Fuzzing 了，本文记录我学习使用 AFL++ 来 Fuzzing 开源的音频文件标签处理库 taglib 的过程。" />
+<link rel="canonical" href="https://pwntips.github.io/2022/07/19/afl-plus-plus-usage.html" />
+<meta property="og:url" content="https://pwntips.github.io/2022/07/19/afl-plus-plus-usage.html" />
+<meta property="og:site_name" content="PwnTips" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-07-19T00:00:00+08:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="学习使用 AFL++" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-07-19T00:00:00+08:00","datePublished":"2022-07-19T00:00:00+08:00","description":"目前热度最高的漏洞挖掘方法应该就是 Fuzzing 了，本文记录我学习使用 AFL++ 来 Fuzzing 开源的音频文件标签处理库 taglib 的过程。","headline":"学习使用 AFL++","mainEntityOfPage":{"@type":"WebPage","@id":"https://pwntips.github.io/2022/07/19/afl-plus-plus-usage.html"},"url":"https://pwntips.github.io/2022/07/19/afl-plus-plus-usage.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://pwntips.github.io/feed.xml" title="PwnTips" /><script async src="https://www.googletagmanager.com/gtag/js?id=G-LDS6Z1TT65"></script>
+<script>
+  window['ga-disable-G-LDS6Z1TT65'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){window.dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-LDS6Z1TT65');
+</script>
+
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">PwnTips</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">学习使用 AFL++</h1>
+    <p class="post-meta"><time class="dt-published" datetime="2022-07-19T00:00:00+08:00" itemprop="datePublished">
+        Jul 19, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>目前热度最高的漏洞挖掘方法应该就是 Fuzzing 了，本文记录我学习使用 AFL++ 来 Fuzzing 开源的音频文件标签处理库 <a href="https://taglib.org/">taglib</a> 的过程。</p>
+
+<h2 id="构建-afl">构建 AFL++</h2>
+
+<p>参考<a href="https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/INSTALL.md">官方文档</a>即可，同时要注意：</p>
+<ul>
+  <li>AFL++ 支持的功能很丰富，考虑到大部分人不会用到所有功能，构建也是提供了不同的可选集合的，比如我只需要 llvm 的 instrumentation，就用 <code class="language-plaintext highlighter-rouge">make all</code> 即可，文档里已经描述的很清楚了。</li>
+  <li>如果需要 <code class="language-plaintext highlighter-rouge">llvm/gcc</code> 以外的一些功能，构建过程中可能从 github/google 服务器拉取依赖代码，推荐挂好梯子</li>
+  <li>先装好依赖确认 llvm-config/LLVM_CONFIG 可以正常使用后再去构建 AFL++，否则可能出现虽然构建成功了，但较新的 llvm 功能没有被构建到程序中的情况。</li>
+  <li>构建完成后，运行 <code class="language-plaintext highlighter-rouge">make install</code>，将 afl++ 安装到 /usr/local/bin 目录</li>
+</ul>
+
+<h2 id="构建-harness">构建 harness</h2>
+
+<p>harness 是被 fuzzing 的程序，它会被 fuzzer 运行，负责执行待 fuzzing 的代码，同时采集代码覆盖信息反馈给 fuzzer。</p>
+
+<p>对于 taglib 来说，examples 目录下提供的 tagreader 程序，可以打开通过参数指定的音频文件，列出文件中包含的 tag，就可以直接作为 harmess 来使用。不过 fuzzing 过程中，会重复的打开文件，修改文件，如果每次打开一个文件都要重启程序，执行效率不高，我按照<a href="https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.persistent_mode.md">官方文档 persist_mode </a> 中提到的方法，对 tagreader.cpp 稍加修改，把它改成了启动后可以持续解析同一个文件的程序，这样省下了很多进程初始化的时间，提升了 fuzzing 效率。</p>
+
+<p>其实还可以进一步优化，采用内存映射的方式读取数据，这样映射一次后，数据就驻留在内存（数据总量很大时也可能是交换文件）中了，省去读取文件的时间。</p>
+
+<p>这里我先尝试用标版的 clang 构建出未修改的 tagreader，成功后再用 afl++ 的 llvm lto 模式构建了 perisst_mode 的 tagreader。这部分的构建官方文档我怀疑有部分内容过时了，对于 taglib 来说 lto 模式构建也很简单，如下操作即可：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cd taglib
+$ cmake -DCMAKE_C_COMPILER=afl-cc -DCMAKE_CXX_COMPILER=afl-c++ -DBUILD_EXAMPLES=ON -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=Release .
+$ export AFL_CC_COMPILE=LTO
+$ make
+</code></pre></div></div>
+
+<p>cmake 的参数：</p>
+<ul>
+  <li>-DCMAKE_C_COMPILER=afl-cc -DCMAKE_CXX_COMPILER=afl-c++ 把 afl-cc/afl-c++ 作为编译工具，这个程序会从环境变量读取相关配置，用合适的参数调用真正的编译工具</li>
+  <li>剩下的部分是 taglib 的参数，参考 <a href="https://github.com/taglib/taglib/blob/master/INSTALL.md">taglib 文档</a></li>
+</ul>
+
+<p>AFL_CC_COMPILE=LTO 是指定 AFL++ 使用 LTO 模式进行插装（instrument）。此模式是官方推荐优先选择的插装模式，详情参考文档<a href="https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/fuzzing_in_depth.md"> fuzzing in depth </a>。</p>
+
+<h2 id="corpus">Corpus</h2>
+
+<p>有了 harness 还需要找支持的 Corpus(样本文件) 才能开始 Fuzzing，taglib 的单元测试中附带了几个文件，目前我就选择这几个文件作为种子样本。以后有时间了，还可以采用从 互联网（google，github）爬取更多的文件，毕竟 AFL++ 只是在做一些高度优化过的爆破，多搞一个样本应该还是会节省很多算力的。另外我目前只提取了其中的 MP3 文件，打算先专注 Fuzzing 一种文件格式，希望可以把算力集中在触发这种文件格式的解析代码路径上。</p>
+
+<p>还有重要的一点是要对样本进行蒸馏（Corpus Distillation），Fuzzing 过程中会对每个进行逐字节/逐x位的处理，所以如果一个样本不能触发新的代码路径的话，把它加到种子中，反倒会降低 Fuzzing 的效率。AFL++ 提供了 afl-cmin、afl-tmin 来精简样本。afl-cmin 用来缩减样本数量，仅留下能触发不同代码路径的样本。afl-tmin 用来缩减样本体积，将样本裁剪成等价但是更小的文件。因为我的种子本来就是象征性的找了几个文件，数量体积都不大，我只是象征性的用 afl-cmin 处理了一下。如果以后真的用爬虫在互联网爬取样本的话，可以在爬取脚本后面接一个自动蒸馏的功能。</p>
+
+<p>其实还有一个可选参数是字典，因为有些代码路径可能要文件内容符合正确的魔法数标识后才能进入，如果是单纯的去爆破，可能要花很长时间，如果有一个已知魔法数组成的字典，没准可以更快的触发到这些路径，但对于我选择的 LTO 插装模式来说，文档指出 AFL++ 会在编译过程中自动的识别并生成字典，我就没再关注这个参数了。</p>
+
+<h2 id="启动-afl-fuzz">启动 afl-fuzz</h2>
+
+<p>准备好上面的材料，就可以启动 afl-fuzz 试下效果了：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ afl-fuzz -i corpus-cmin -o fuzzout -- ./tagreader @@
+</code></pre></div></div>
+
+<ul>
+  <li>输入文件夹是 corpus-cmin 里面存放了 afl-cmin 过滤好的样本</li>
+  <li>输出文件夹是 fuzzout，AFL++ 会把 fuzzing 的状态，新样本等内容都存到这里</li>
+  <li>– 用来之后是 harness 的命令行，@@ 占位符用来指代需要 AFL++ 替换成文件路径的部分</li>
+</ul>
+
+<p>看到 afl-fuzz 可以正常运行后，我们可以改进一下，利用好 afl++ 提供的多种功能。<a href="https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/fuzzing_in_depth.md#c-using-multiple-cores">官方推荐</a>的方式是使用 -M/-S 参数，利用主从模式开启多个 afl-fuzz，每个实例可以使用不同参数或是使用不同的构建选项的 harness，这样所有的实例之间会同步样本，互相配合扬长避短。</p>
+<ul>
+  <li>harness 开启不同的 sanitizer, 开启 sanitizer 会减慢运行速度，但是可以发现正常情况下不会触发崩溃的问题</li>
+  <li>harness 使用 CMPLOG 选项编译，尝试自动解决魔法数/校验和的问题，详见 <a href="https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.cmplog.md">README.cmdlog.md</a></li>
+  <li>harness 使用 laf-intel 选项编译，采用不同的方案尝试解决魔法数的问题，详见 <a href="https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.laf-intel.md">README.laf-intel.md</a></li>
+  <li>尝试不同的文件突变算法</li>
+</ul>
+
+<p>我的 afl-fuzz 都跑在一个廉价单核 vps 上，CPU 算力不是很够用，勉强开了 4 个实例：</p>
+<ul>
+  <li>一个没有额外参数的主实例 <code class="language-plaintext highlighter-rouge">afl-fuzz -M master -i corpus-cmin -o fuzzout -- ./tagreader.lto.afl @@</code></li>
+  <li>llvm 模式插装并开启 CMPLOG，这个是因为 taglib 在 lto 模式下开启 CMPLOG 编译会出错</li>
+  <li>lto 模式开启 la-intel 的 harness</li>
+  <li>lto 模式开启 ASAN 的 harness</li>
+</ul>
+
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = '';
+      this.page.identifier = 'https://pwntips.github.io/2022/07/19/afl-plus-plus-usage.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://PwnTips.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2022/07/19/afl-plus-plus-usage.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="https://pwntips.github.io/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Tips &amp; Tricks</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

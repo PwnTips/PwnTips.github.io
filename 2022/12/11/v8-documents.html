@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>v8 资料汇总 | PwnTips</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="v8 资料汇总" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="V8 资料汇总" />
+<meta property="og:description" content="V8 资料汇总" />
+<link rel="canonical" href="https://pwntips.github.io/2022/12/11/v8-documents.html" />
+<meta property="og:url" content="https://pwntips.github.io/2022/12/11/v8-documents.html" />
+<meta property="og:site_name" content="PwnTips" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-12-11T00:00:00+08:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="v8 资料汇总" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-12-11T00:00:00+08:00","datePublished":"2022-12-11T00:00:00+08:00","description":"V8 资料汇总","headline":"v8 资料汇总","mainEntityOfPage":{"@type":"WebPage","@id":"https://pwntips.github.io/2022/12/11/v8-documents.html"},"url":"https://pwntips.github.io/2022/12/11/v8-documents.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://pwntips.github.io/feed.xml" title="PwnTips" /><script async src="https://www.googletagmanager.com/gtag/js?id=G-LDS6Z1TT65"></script>
+<script>
+  window['ga-disable-G-LDS6Z1TT65'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){window.dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-LDS6Z1TT65');
+</script>
+
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">PwnTips</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">v8 资料汇总</h1>
+    <p class="post-meta"><time class="dt-published" datetime="2022-12-11T00:00:00+08:00" itemprop="datePublished">
+        Dec 11, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="v8-资料汇总">V8 资料汇总</h2>
+
+<p>v8 的资料虽然很多，但是很多是非官方的资料，或者没有一个统一的所搜入口，今天在 v8-dev 用户组发现一个不错的帖子，里面包含一些我以前没搜到过的资料，我就想我干脆自己整理一份，把我觉得非常值得读的资料都列到一篇文章里，以后不断更新。</p>
+
+<h3 id="121211-更新">12.12.11 更新</h3>
+
+<p><img src="Pasted image 20221211203015.png" alt="截图" />
+From: https://groups.google.com/g/v8-dev/c/J-lbjGeu6Yw</p>
+
+<ul>
+  <li>The best way to start with V8 is to play around “hello world” at <a href="https://v8.dev/docs/embed">https://v8.dev/docs/embed</a> to find out the basics.   – 这篇是 v8 团队发的官方文章，大体上是讲怎么把 v8 当作嵌入式解释器使用，中间讲了很多 v8 的基本概念，入门必读。</li>
+  <li>Then, <a href="https://github.com/thlorenz/v8-perf/blob/master/README.md">https://github.com/thlorenz/v8-perf/blob/master/README.md</a> will give you some links to find out how V8 works internally  - 包含介绍 v8 内部实现的很多内容，包括很多 v8 团队发布很多 talk 的视频和文档，我今天刚知道这个，还没仔细看</li>
+  <li><a href="https://v8.dev/docs">https://v8.dev/docs</a> will explain some workflows to use. - 官方文档，也包括了 v8 个方面的内容，和第二个有一些内容是重复的，例如想了解 turbofan 可以看 https://v8.dev/docs/turbofan ，个人感觉第二个的导航做的更好一些。</li>
+</ul>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = '';
+      this.page.identifier = 'https://pwntips.github.io/2022/12/11/v8-documents.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://PwnTips.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2022/12/11/v8-documents.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="https://pwntips.github.io/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Tips &amp; Tricks</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
