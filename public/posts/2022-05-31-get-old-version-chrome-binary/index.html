@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>获取旧版本的 Chrome | My New Hugo Site</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="复现 Chrome 漏洞肯定需要要先拿到受影响的旧版程序，本文记录两种获取任意版本 Chrome 文件的方法：
+
+从源码构建，优点是可以得到 Debug 版的文件便于调试，缺点是需要花很长时间。
+Chromium 团队维护了一份旧版 Chrome 的备份，包含调试符号，可以用来调试。缺点是备份只有 Release 版，且有部分版本是没有备份的，需要用临近版本替代。
+
+构建
+构建方法参考了官方文档和 StackOverflow 上的回答。
+获取指定版本的源码
+由于网络环境恶略，我只下载指定 Tag 的代码，不下载历史 Commit。
+网络环境好的话，可以去掉 --deph 1 选项，下载完整的 Commit 记录，避免不必要的问题。
+# 把tags/ 和 chromium_ 后面的 Major.Minor.Patch.Build 形式的版本号替换成你需要的版本
+&gt; git fetch `
+&gt;  https://chromium.googlesource.com/chromium/src.git `
+&gt;  &#43;refs/tags/59.0.3071.115:chromium_59.0.3071.115 --depth 1
+&gt; git checkout tags/59.0.3071.115
+
+ℹ️NOTE: 构建脚本需要从上一个 Commit 获取时间戳，不下载历史 Commit 就需要在构建时手工修正这个时间戳，后面会介绍修正方法。
+
+depot_tools 切换到对应的版本（可选）
+把 depot_tools 切换到和源码对应的版本，防止兼容性问题。
+# chrome 源码的时间戳
+~/chrome/src &gt; git log -n 1 --pretty=format:%ci
+# depot_tools 切换到对应时间的 commit
+~/depot_tools &gt; git rev-list -n 1 --before=&#34;上一步获取的时间戳&#34; main
+~/depot_tools &gt; git checkout 上一步获取的 Commit
+# 禁用 depot_tools 自动更新
+~/depot_tools &gt; $env:DEPOT_TOOLS_UPDATE=0
+同步依赖
+# 清理历史文件
+&gt; git clean -ffd
+# 下载依赖
+&gt; gclient syn -D --force --reset
+构建
+参考 墙内构建 Chromium 用 GN 和 Ninja 执行构建。">
+    <meta name="generator" content="Hugo 0.139.2">
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+    
+
+    
+      
+
+    
+
+    
+
+    
+      <link rel="canonical" href="http://localhost:1313/posts/2022-05-31-get-old-version-chrome-binary/">
+    
+
+    <meta property="og:url" content="http://localhost:1313/posts/2022-05-31-get-old-version-chrome-binary/">
+  <meta property="og:site_name" content="My New Hugo Site">
+  <meta property="og:title" content="获取旧版本的 Chrome">
+  <meta property="og:description" content="复现 Chrome 漏洞肯定需要要先拿到受影响的旧版程序，本文记录两种获取任意版本 Chrome 文件的方法：
+从源码构建，优点是可以得到 Debug 版的文件便于调试，缺点是需要花很长时间。 Chromium 团队维护了一份旧版 Chrome 的备份，包含调试符号，可以用来调试。缺点是备份只有 Release 版，且有部分版本是没有备份的，需要用临近版本替代。 构建 构建方法参考了官方文档和 StackOverflow 上的回答。
+获取指定版本的源码 由于网络环境恶略，我只下载指定 Tag 的代码，不下载历史 Commit。 网络环境好的话，可以去掉 --deph 1 选项，下载完整的 Commit 记录，避免不必要的问题。
+# 把tags/ 和 chromium_ 后面的 Major.Minor.Patch.Build 形式的版本号替换成你需要的版本 &gt; git fetch ` &gt; https://chromium.googlesource.com/chromium/src.git ` &gt; &#43;refs/tags/59.0.3071.115:chromium_59.0.3071.115 --depth 1 &gt; git checkout tags/59.0.3071.115 ℹ️NOTE: 构建脚本需要从上一个 Commit 获取时间戳，不下载历史 Commit 就需要在构建时手工修正这个时间戳，后面会介绍修正方法。
+depot_tools 切换到对应的版本（可选） 把 depot_tools 切换到和源码对应的版本，防止兼容性问题。
+# chrome 源码的时间戳 ~/chrome/src &gt; git log -n 1 --pretty=format:%ci # depot_tools 切换到对应时间的 commit ~/depot_tools &gt; git rev-list -n 1 --before=&#34;上一步获取的时间戳&#34; main ~/depot_tools &gt; git checkout 上一步获取的 Commit # 禁用 depot_tools 自动更新 ~/depot_tools &gt; $env:DEPOT_TOOLS_UPDATE=0 同步依赖 # 清理历史文件 &gt; git clean -ffd # 下载依赖 &gt; gclient syn -D --force --reset 构建 参考 墙内构建 Chromium 用 GN 和 Ninja 执行构建。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:tag" content="Chromium">
+    <meta property="article:tag" content="Pwn">
+    <meta property="article:tag" content="V8">
+
+  <meta itemprop="name" content="获取旧版本的 Chrome">
+  <meta itemprop="description" content="复现 Chrome 漏洞肯定需要要先拿到受影响的旧版程序，本文记录两种获取任意版本 Chrome 文件的方法：
+从源码构建，优点是可以得到 Debug 版的文件便于调试，缺点是需要花很长时间。 Chromium 团队维护了一份旧版 Chrome 的备份，包含调试符号，可以用来调试。缺点是备份只有 Release 版，且有部分版本是没有备份的，需要用临近版本替代。 构建 构建方法参考了官方文档和 StackOverflow 上的回答。
+获取指定版本的源码 由于网络环境恶略，我只下载指定 Tag 的代码，不下载历史 Commit。 网络环境好的话，可以去掉 --deph 1 选项，下载完整的 Commit 记录，避免不必要的问题。
+# 把tags/ 和 chromium_ 后面的 Major.Minor.Patch.Build 形式的版本号替换成你需要的版本 &gt; git fetch ` &gt; https://chromium.googlesource.com/chromium/src.git ` &gt; &#43;refs/tags/59.0.3071.115:chromium_59.0.3071.115 --depth 1 &gt; git checkout tags/59.0.3071.115 ℹ️NOTE: 构建脚本需要从上一个 Commit 获取时间戳，不下载历史 Commit 就需要在构建时手工修正这个时间戳，后面会介绍修正方法。
+depot_tools 切换到对应的版本（可选） 把 depot_tools 切换到和源码对应的版本，防止兼容性问题。
+# chrome 源码的时间戳 ~/chrome/src &gt; git log -n 1 --pretty=format:%ci # depot_tools 切换到对应时间的 commit ~/depot_tools &gt; git rev-list -n 1 --before=&#34;上一步获取的时间戳&#34; main ~/depot_tools &gt; git checkout 上一步获取的 Commit # 禁用 depot_tools 自动更新 ~/depot_tools &gt; $env:DEPOT_TOOLS_UPDATE=0 同步依赖 # 清理历史文件 &gt; git clean -ffd # 下载依赖 &gt; gclient syn -D --force --reset 构建 参考 墙内构建 Chromium 用 GN 和 Ninja 执行构建。">
+  <meta itemprop="wordCount" content="170">
+  <meta itemprop="keywords" content="Chromium,Pwn,V8">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="获取旧版本的 Chrome">
+  <meta name="twitter:description" content="复现 Chrome 漏洞肯定需要要先拿到受影响的旧版程序，本文记录两种获取任意版本 Chrome 文件的方法：
+从源码构建，优点是可以得到 Debug 版的文件便于调试，缺点是需要花很长时间。 Chromium 团队维护了一份旧版 Chrome 的备份，包含调试符号，可以用来调试。缺点是备份只有 Release 版，且有部分版本是没有备份的，需要用临近版本替代。 构建 构建方法参考了官方文档和 StackOverflow 上的回答。
+获取指定版本的源码 由于网络环境恶略，我只下载指定 Tag 的代码，不下载历史 Commit。 网络环境好的话，可以去掉 --deph 1 选项，下载完整的 Commit 记录，避免不必要的问题。
+# 把tags/ 和 chromium_ 后面的 Major.Minor.Patch.Build 形式的版本号替换成你需要的版本 &gt; git fetch ` &gt; https://chromium.googlesource.com/chromium/src.git ` &gt; &#43;refs/tags/59.0.3071.115:chromium_59.0.3071.115 --depth 1 &gt; git checkout tags/59.0.3071.115 ℹ️NOTE: 构建脚本需要从上一个 Commit 获取时间戳，不下载历史 Commit 就需要在构建时手工修正这个时间戳，后面会介绍修正方法。
+depot_tools 切换到对应的版本（可选） 把 depot_tools 切换到和源码对应的版本，防止兼容性问题。
+# chrome 源码的时间戳 ~/chrome/src &gt; git log -n 1 --pretty=format:%ci # depot_tools 切换到对应时间的 commit ~/depot_tools &gt; git rev-list -n 1 --before=&#34;上一步获取的时间戳&#34; main ~/depot_tools &gt; git checkout 上一步获取的 Commit # 禁用 depot_tools 自动更新 ~/depot_tools &gt; $env:DEPOT_TOOLS_UPDATE=0 同步依赖 # 清理历史文件 &gt; git clean -ffd # 下载依赖 &gt; gclient syn -D --force --reset 构建 参考 墙内构建 Chromium 用 GN 和 Ninja 执行构建。">
+
+	
+  </head><body class="ma0 avenir bg-near-white development">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        My New Hugo Site
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      <div class="ananke-socials"></div>
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked ttu">
+          
+        Posts
+      </aside><div id="sharing" class="mt3 ananke-socials"></div>
+<h1 class="f1 athelas mt3 mb1">获取旧版本的 Chrome</h1>
+      
+      
+      
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><p>复现 Chrome 漏洞肯定需要要先拿到受影响的旧版程序，本文记录两种获取任意版本 Chrome 文件的方法：</p>
+<ul>
+<li>从源码构建，优点是可以得到 Debug 版的文件便于调试，缺点是需要花很长时间。</li>
+<li>Chromium 团队维护了一份旧版 Chrome 的备份，包含调试符号，可以用来调试。缺点是备份只有 Release 版，且有部分版本是没有备份的，需要用临近版本替代。</li>
+</ul>
+<h2 id="构建">构建</h2>
+<p>构建方法参考了<a href="https://chromium.googlesource.com/chromium/src/+/master/docs/building_old_revisions.md">官方文档</a>和<a href="https://stackoverflow.com/questions/47087970/how-to-checkout-and-build-specific-chromium-tag-branch-without-download-the-full"> StackOverflow 上的回答</a>。</p>
+<h3 id="获取指定版本的源码">获取指定版本的源码</h3>
+<p>由于网络环境恶略，我只下载指定 Tag 的代码，不下载历史 Commit。
+网络环境好的话，可以去掉 <code>--deph 1</code> 选项，下载完整的 Commit 记录，避免不必要的问题。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 把tags/ 和 chromium_ 后面的 Major.Minor.Patch.Build 形式的版本号替换成你需要的版本</span>
+</span></span><span style="display:flex;"><span>&gt; git fetch <span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>&gt;  https://chromium.googlesource.com/chromium/src.git <span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>&gt;  +refs/tags/59.0.3071.115:chromium_59.0.3071.115 --depth <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>&gt; git checkout tags/59.0.3071.115
+</span></span></code></pre></div><hr>
+<p><strong>ℹ️NOTE</strong>: 构建脚本需要从上一个 Commit 获取时间戳，不下载历史 Commit 就需要在构建时手工修正这个时间戳，后面会介绍修正方法。</p>
+<hr>
+<h3 id="depot_tools-切换到对应的版本可选">depot_tools 切换到对应的版本（可选）</h3>
+<p>把 depot_tools 切换到和源码对应的版本，防止兼容性问题。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># chrome 源码的时间戳</span>
+</span></span><span style="display:flex;"><span>~/chrome/src &gt; git log -n <span style="color:#ae81ff">1</span> --pretty<span style="color:#f92672">=</span>format:%ci
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># depot_tools 切换到对应时间的 commit</span>
+</span></span><span style="display:flex;"><span>~/depot_tools &gt; git rev-list -n <span style="color:#ae81ff">1</span> --before<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;上一步获取的时间戳&#34;</span> main
+</span></span><span style="display:flex;"><span>~/depot_tools &gt; git checkout 上一步获取的 Commit
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 禁用 depot_tools 自动更新</span>
+</span></span><span style="display:flex;"><span>~/depot_tools &gt; $env:DEPOT_TOOLS_UPDATE<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+</span></span></code></pre></div><h3 id="同步依赖">同步依赖</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 清理历史文件</span>
+</span></span><span style="display:flex;"><span>&gt; git clean -ffd
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 下载依赖</span>
+</span></span><span style="display:flex;"><span>&gt; gclient syn -D --force --reset
+</span></span></code></pre></div><h3 id="构建-1">构建</h3>
+<p>参考 <a href="./2022-03-20-build-chromium">墙内构建 Chromium</a> 用 GN 和 Ninja 执行构建。</p>
+<h2 id="下载官方备份">下载官方备份</h2>
+<p>Google 也提供了旧版 Chrome 备份的下载，包括多个平台，而且包含调试符号，可以进行源码调试，唯一的缺点是只备份了 Release 版。</p>
+<h3 id="第三方工具">第三方工具</h3>
+<ul>
+<li>直接在第三方工具 <a href="https://vikyd.github.io/download-chromium-history-version/">https://vikyd.github.io/download-chromium-history-version/</a> ，查找某个版本对应的镜像下载地址，下载地址都是 Google 官方的备份，可以放心使用。</li>
+<li>同样功能的项目还有很多 <a href="https://github.com/Bugazelle/chromium-all-old-stable-versions">https://github.com/Bugazelle/chromium-all-old-stable-versions</a></li>
+</ul>
+<h3 id="手工查找">手工查找</h3>
+<p>也可以按照 <a href="https://www.chromium.org/getting-involved/download-chromium/">官方文档</a>中介绍的方法手工查找下载地址：</p>
+<ul>
+<li>(可选）在 <a href="https://chromereleases.googleblog.com/search/label/Stable%20updates">Chrome 发布记录</a> 查询到历史版本的完整版本号
+例如，搜索 &ldquo;Chrome 76&rdquo; 可以搜到 76.0.3809.87 的发布记录</li>
+<li>利用 <a href="https://omahaproxy.appspot.com/">omahaproxy</a> 页面的 Version Information 功能，搜索版本号对应的 Position</li>
+<li>在 <a href="https://commondatastorage.googleapis.com/chromium-browser-snapshots/index.html">commondatastorage</a> 页面，选择你的系统对应的目录
+例如，我选择 Win_x64</li>
+<li>在 Filter 输入框中填入 Position
+<ul>
+<li>如果查到对应的目录，按需下载此目录内的文件即可
+例如：Chrome-win.zip（主程序）和 Chrome-win32-syms.zip（调试符号）</li>
+<li>没找到说明此版本没有对应的备份，需要调整版本号，下载近似版本的备份</li>
+</ul>
+</li>
+<li>上一节提到的工具，也是基于这个思路开发的，还有版本号模糊搜索的能力，推荐直接使用工具</li>
+</ul>
+<ul class="pa0">
+  
+   <li class="list di">
+     <a href="/tags/chromium/" class="link f5 grow no-underline br-pill ba ph3 pv2 mb2 dib black sans-serif">Chromium</a>
+   </li>
+  
+   <li class="list di">
+     <a href="/tags/pwn/" class="link f5 grow no-underline br-pill ba ph3 pv2 mb2 dib black sans-serif">Pwn</a>
+   </li>
+  
+   <li class="list di">
+     <a href="/tags/v8/" class="link f5 grow no-underline br-pill ba ph3 pv2 mb2 dib black sans-serif">V8</a>
+   </li>
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+  <div class="bg-light-gray pa3 nested-list-reset nested-copy-line-height nested-links">
+    <p class="f5 b mb3">Related</p>
+    <ul class="pa0 list">
+	   
+	     <li  class="mb2">
+          <a href="/posts/2022-03-20-build-chromium/">构建 Chromium（墙内）</a>
+        </li>
+	    
+    </ul>
+</div>
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://localhost:1313/" >
+    &copy;  My New Hugo Site 2024 
+  </a>
+    <div><div class="ananke-socials"></div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>

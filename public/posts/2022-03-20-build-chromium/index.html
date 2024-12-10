@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>构建 Chromium（墙内） | My New Hugo Site</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="本文记录在 Windows 系统构建 Chromium 的过程，方法完全抄袭自 官方文档，仅加入一些代理配置相关的内容。
+致谢
+多谢 GFW，把简单的事情变得复杂，让我们人生多了一些历练的机会🙃。
+Visual Studio
+
+至少需要 VS 2017，推荐使用 VS 2019，我用的版本是 VS 2019 Version 16.11.9。
+需要装 Desktop development with C&#43;&#43;、MFC、ATL 这几个组件
+Windows SDK 版本要高于 10.0.19041，对于 VS 2019 来说默认就是满足的，不放心的话构建前可以先更新下。
+如果是编译 2019 年左右的旧版本，首选 VS 2017，我在用 VS 2019 编译旧版本时遇到了兼容问题，可以安装多个版本，构建时显示指定使用的版本。
+
+depot_tools
+depot_tools 是开发 Chromium 所需的一系列工具、脚本的集合。
+安装
+
+下载 https://storage.googleapis.com/chrome-infra/depot_tools.zip。
+解压到任意位置，例如 d:/depot_tools。
+多年的采坑经验告诉我，解压路径层级少一点，不要超长，不要包含中文、空格，就不容易遇到奇怪的问题。
+解压完成后，要检查一下 depot_tools 目录，确认存在 .git 子目录，如果不存需要换一个解压工具，例如 7z。
+
+配置 Git （可选）
+# 提交代码需要
+&gt; git config --global user.name &#34;ReplaceWithYourUserName&#34;
+&gt; git config --global user.email &#34;ReplaceWithYourEmail@chromium.org&#34;
+# git 自动转换换行回车
+&gt; git config --global core.autocrlf false
+# git 不存储文件权限
+&gt; git config --global core.filemode false
+# 使用 rebase 合并拉取的代码
+&gt; git config --global branch.autosetuprebase always
+环境变量
+
+将 depot_tools 目录加到 PATH，要确保加到 Python 的安装目录前，例如 PATH 的第一项。这会使 depot_tools 目录中的 Python 替代本地安装的 Python，如果你修改的是持久化的环境变量配置，用完后要改回去。
+DEPOT_TOOLS_WIN_TOOLCHAIN 设置为 0，使用本地的 Visual Studio 工具构建 Chrome
+(可选) vs2019_install/vs2017_install/vs2022_install: 设置为 Visual Studio 的安装目录。
+depot_tools 会自动搜索 Visual Studio 安装目录，如果对搜索结果不满意可以用此环境变量显示指定版本和安装目录
+例如，机器上安装了多个 Visual Studio，默认搜索到的可能是 VS 2019，如果你想用 VS 2022 的话，就可以指定 vs2022_install 环境变量。
+
+# 这个 URL 目前不需要挂代理，需要代理可以改成:
+# Invoke-WebRequest -URI `
+#   https://storage.googleapis.com/chrome-infra/depot_tools.zip `
+#   -Proxy &#34;http://127.0.0.1:8001&#34; -OutFile ./depot_tools.zip
+&gt; Invoke-WebRequest -URI `
+&gt;   https://storage.googleapis.com/chrome-infra/depot_tools.zip `
+&gt;   -OutFile ./depot_tools.zip
+# 解压，需要安装7zip
+&gt; 7z x .\depot_tools.zip -odepot_tools
+# 检查.git子目录存在
+&gt; ls .\depot_tools\.git
+&gt; cd .\depot_tools\
+# 修改环境变量, 仅当前会话生效
+&gt; $env:PATH=&#34;$PWD/;$env:PATH&#34;
+&gt; $env:DEPOT_TOOLS_WIN_TOOLCHAIN=0
+# $env:vs2019_install= `
+#   &#34;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community&#34;
+配置代理
+depot_tools 需要挂代理才能正常运行，它是多个工具、脚本的集合，代理设置也需要配置多项。">
+    <meta name="generator" content="Hugo 0.139.2">
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+    
+
+    
+      
+
+    
+
+    
+
+    
+      <link rel="canonical" href="http://localhost:1313/posts/2022-03-20-build-chromium/">
+    
+
+    <meta property="og:url" content="http://localhost:1313/posts/2022-03-20-build-chromium/">
+  <meta property="og:site_name" content="My New Hugo Site">
+  <meta property="og:title" content="构建 Chromium（墙内）">
+  <meta property="og:description" content="本文记录在 Windows 系统构建 Chromium 的过程，方法完全抄袭自 官方文档，仅加入一些代理配置相关的内容。
+致谢 多谢 GFW，把简单的事情变得复杂，让我们人生多了一些历练的机会🙃。
+Visual Studio 至少需要 VS 2017，推荐使用 VS 2019，我用的版本是 VS 2019 Version 16.11.9。 需要装 Desktop development with C&#43;&#43;、MFC、ATL 这几个组件 Windows SDK 版本要高于 10.0.19041，对于 VS 2019 来说默认就是满足的，不放心的话构建前可以先更新下。 如果是编译 2019 年左右的旧版本，首选 VS 2017，我在用 VS 2019 编译旧版本时遇到了兼容问题，可以安装多个版本，构建时显示指定使用的版本。 depot_tools depot_tools 是开发 Chromium 所需的一系列工具、脚本的集合。
+安装 下载 https://storage.googleapis.com/chrome-infra/depot_tools.zip。 解压到任意位置，例如 d:/depot_tools。
+多年的采坑经验告诉我，解压路径层级少一点，不要超长，不要包含中文、空格，就不容易遇到奇怪的问题。 解压完成后，要检查一下 depot_tools 目录，确认存在 .git 子目录，如果不存需要换一个解压工具，例如 7z。 配置 Git （可选） # 提交代码需要 &gt; git config --global user.name &#34;ReplaceWithYourUserName&#34; &gt; git config --global user.email &#34;ReplaceWithYourEmail@chromium.org&#34; # git 自动转换换行回车 &gt; git config --global core.autocrlf false # git 不存储文件权限 &gt; git config --global core.filemode false # 使用 rebase 合并拉取的代码 &gt; git config --global branch.autosetuprebase always 环境变量 将 depot_tools 目录加到 PATH，要确保加到 Python 的安装目录前，例如 PATH 的第一项。这会使 depot_tools 目录中的 Python 替代本地安装的 Python，如果你修改的是持久化的环境变量配置，用完后要改回去。 DEPOT_TOOLS_WIN_TOOLCHAIN 设置为 0，使用本地的 Visual Studio 工具构建 Chrome (可选) vs2019_install/vs2017_install/vs2022_install: 设置为 Visual Studio 的安装目录。 depot_tools 会自动搜索 Visual Studio 安装目录，如果对搜索结果不满意可以用此环境变量显示指定版本和安装目录 例如，机器上安装了多个 Visual Studio，默认搜索到的可能是 VS 2019，如果你想用 VS 2022 的话，就可以指定 vs2022_install 环境变量。 # 这个 URL 目前不需要挂代理，需要代理可以改成: # Invoke-WebRequest -URI ` # https://storage.googleapis.com/chrome-infra/depot_tools.zip ` # -Proxy &#34;http://127.0.0.1:8001&#34; -OutFile ./depot_tools.zip &gt; Invoke-WebRequest -URI ` &gt; https://storage.googleapis.com/chrome-infra/depot_tools.zip ` &gt; -OutFile ./depot_tools.zip # 解压，需要安装7zip &gt; 7z x .\depot_tools.zip -odepot_tools # 检查.git子目录存在 &gt; ls .\depot_tools\.git &gt; cd .\depot_tools\ # 修改环境变量, 仅当前会话生效 &gt; $env:PATH=&#34;$PWD/;$env:PATH&#34; &gt; $env:DEPOT_TOOLS_WIN_TOOLCHAIN=0 # $env:vs2019_install= ` # &#34;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community&#34; 配置代理 depot_tools 需要挂代理才能正常运行，它是多个工具、脚本的集合，代理设置也需要配置多项。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:tag" content="Chromium">
+    <meta property="article:tag" content="Pwn">
+    <meta property="article:tag" content="V8">
+
+  <meta itemprop="name" content="构建 Chromium（墙内）">
+  <meta itemprop="description" content="本文记录在 Windows 系统构建 Chromium 的过程，方法完全抄袭自 官方文档，仅加入一些代理配置相关的内容。
+致谢 多谢 GFW，把简单的事情变得复杂，让我们人生多了一些历练的机会🙃。
+Visual Studio 至少需要 VS 2017，推荐使用 VS 2019，我用的版本是 VS 2019 Version 16.11.9。 需要装 Desktop development with C&#43;&#43;、MFC、ATL 这几个组件 Windows SDK 版本要高于 10.0.19041，对于 VS 2019 来说默认就是满足的，不放心的话构建前可以先更新下。 如果是编译 2019 年左右的旧版本，首选 VS 2017，我在用 VS 2019 编译旧版本时遇到了兼容问题，可以安装多个版本，构建时显示指定使用的版本。 depot_tools depot_tools 是开发 Chromium 所需的一系列工具、脚本的集合。
+安装 下载 https://storage.googleapis.com/chrome-infra/depot_tools.zip。 解压到任意位置，例如 d:/depot_tools。
+多年的采坑经验告诉我，解压路径层级少一点，不要超长，不要包含中文、空格，就不容易遇到奇怪的问题。 解压完成后，要检查一下 depot_tools 目录，确认存在 .git 子目录，如果不存需要换一个解压工具，例如 7z。 配置 Git （可选） # 提交代码需要 &gt; git config --global user.name &#34;ReplaceWithYourUserName&#34; &gt; git config --global user.email &#34;ReplaceWithYourEmail@chromium.org&#34; # git 自动转换换行回车 &gt; git config --global core.autocrlf false # git 不存储文件权限 &gt; git config --global core.filemode false # 使用 rebase 合并拉取的代码 &gt; git config --global branch.autosetuprebase always 环境变量 将 depot_tools 目录加到 PATH，要确保加到 Python 的安装目录前，例如 PATH 的第一项。这会使 depot_tools 目录中的 Python 替代本地安装的 Python，如果你修改的是持久化的环境变量配置，用完后要改回去。 DEPOT_TOOLS_WIN_TOOLCHAIN 设置为 0，使用本地的 Visual Studio 工具构建 Chrome (可选) vs2019_install/vs2017_install/vs2022_install: 设置为 Visual Studio 的安装目录。 depot_tools 会自动搜索 Visual Studio 安装目录，如果对搜索结果不满意可以用此环境变量显示指定版本和安装目录 例如，机器上安装了多个 Visual Studio，默认搜索到的可能是 VS 2019，如果你想用 VS 2022 的话，就可以指定 vs2022_install 环境变量。 # 这个 URL 目前不需要挂代理，需要代理可以改成: # Invoke-WebRequest -URI ` # https://storage.googleapis.com/chrome-infra/depot_tools.zip ` # -Proxy &#34;http://127.0.0.1:8001&#34; -OutFile ./depot_tools.zip &gt; Invoke-WebRequest -URI ` &gt; https://storage.googleapis.com/chrome-infra/depot_tools.zip ` &gt; -OutFile ./depot_tools.zip # 解压，需要安装7zip &gt; 7z x .\depot_tools.zip -odepot_tools # 检查.git子目录存在 &gt; ls .\depot_tools\.git &gt; cd .\depot_tools\ # 修改环境变量, 仅当前会话生效 &gt; $env:PATH=&#34;$PWD/;$env:PATH&#34; &gt; $env:DEPOT_TOOLS_WIN_TOOLCHAIN=0 # $env:vs2019_install= ` # &#34;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community&#34; 配置代理 depot_tools 需要挂代理才能正常运行，它是多个工具、脚本的集合，代理设置也需要配置多项。">
+  <meta itemprop="wordCount" content="777">
+  <meta itemprop="keywords" content="Chromium,Pwn,V8">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="构建 Chromium（墙内）">
+  <meta name="twitter:description" content="本文记录在 Windows 系统构建 Chromium 的过程，方法完全抄袭自 官方文档，仅加入一些代理配置相关的内容。
+致谢 多谢 GFW，把简单的事情变得复杂，让我们人生多了一些历练的机会🙃。
+Visual Studio 至少需要 VS 2017，推荐使用 VS 2019，我用的版本是 VS 2019 Version 16.11.9。 需要装 Desktop development with C&#43;&#43;、MFC、ATL 这几个组件 Windows SDK 版本要高于 10.0.19041，对于 VS 2019 来说默认就是满足的，不放心的话构建前可以先更新下。 如果是编译 2019 年左右的旧版本，首选 VS 2017，我在用 VS 2019 编译旧版本时遇到了兼容问题，可以安装多个版本，构建时显示指定使用的版本。 depot_tools depot_tools 是开发 Chromium 所需的一系列工具、脚本的集合。
+安装 下载 https://storage.googleapis.com/chrome-infra/depot_tools.zip。 解压到任意位置，例如 d:/depot_tools。
+多年的采坑经验告诉我，解压路径层级少一点，不要超长，不要包含中文、空格，就不容易遇到奇怪的问题。 解压完成后，要检查一下 depot_tools 目录，确认存在 .git 子目录，如果不存需要换一个解压工具，例如 7z。 配置 Git （可选） # 提交代码需要 &gt; git config --global user.name &#34;ReplaceWithYourUserName&#34; &gt; git config --global user.email &#34;ReplaceWithYourEmail@chromium.org&#34; # git 自动转换换行回车 &gt; git config --global core.autocrlf false # git 不存储文件权限 &gt; git config --global core.filemode false # 使用 rebase 合并拉取的代码 &gt; git config --global branch.autosetuprebase always 环境变量 将 depot_tools 目录加到 PATH，要确保加到 Python 的安装目录前，例如 PATH 的第一项。这会使 depot_tools 目录中的 Python 替代本地安装的 Python，如果你修改的是持久化的环境变量配置，用完后要改回去。 DEPOT_TOOLS_WIN_TOOLCHAIN 设置为 0，使用本地的 Visual Studio 工具构建 Chrome (可选) vs2019_install/vs2017_install/vs2022_install: 设置为 Visual Studio 的安装目录。 depot_tools 会自动搜索 Visual Studio 安装目录，如果对搜索结果不满意可以用此环境变量显示指定版本和安装目录 例如，机器上安装了多个 Visual Studio，默认搜索到的可能是 VS 2019，如果你想用 VS 2022 的话，就可以指定 vs2022_install 环境变量。 # 这个 URL 目前不需要挂代理，需要代理可以改成: # Invoke-WebRequest -URI ` # https://storage.googleapis.com/chrome-infra/depot_tools.zip ` # -Proxy &#34;http://127.0.0.1:8001&#34; -OutFile ./depot_tools.zip &gt; Invoke-WebRequest -URI ` &gt; https://storage.googleapis.com/chrome-infra/depot_tools.zip ` &gt; -OutFile ./depot_tools.zip # 解压，需要安装7zip &gt; 7z x .\depot_tools.zip -odepot_tools # 检查.git子目录存在 &gt; ls .\depot_tools\.git &gt; cd .\depot_tools\ # 修改环境变量, 仅当前会话生效 &gt; $env:PATH=&#34;$PWD/;$env:PATH&#34; &gt; $env:DEPOT_TOOLS_WIN_TOOLCHAIN=0 # $env:vs2019_install= ` # &#34;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community&#34; 配置代理 depot_tools 需要挂代理才能正常运行，它是多个工具、脚本的集合，代理设置也需要配置多项。">
+
+	
+  </head><body class="ma0 avenir bg-near-white development">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        My New Hugo Site
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      <div class="ananke-socials"></div>
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked ttu">
+          
+        Posts
+      </aside><div id="sharing" class="mt3 ananke-socials"></div>
+<h1 class="f1 athelas mt3 mb1">构建 Chromium（墙内）</h1>
+      
+      
+      
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><p>本文记录在 Windows 系统构建 Chromium 的过程，方法完全抄袭自 <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/windows_build_instructions.md">官方文档</a>，仅加入一些代理配置相关的内容。</p>
+<h2 id="致谢">致谢</h2>
+<p>多谢 GFW，把简单的事情变得复杂，让我们人生多了一些历练的机会🙃。</p>
+<h2 id="visual-studio">Visual Studio</h2>
+<ul>
+<li>至少需要 VS 2017，推荐使用 VS 2019，我用的版本是 VS 2019 Version 16.11.9。</li>
+<li>需要装 Desktop development with C++、MFC、ATL 这几个组件</li>
+<li>Windows SDK 版本要高于 10.0.19041，对于 VS 2019 来说默认就是满足的，不放心的话构建前可以先更新下。</li>
+<li>如果是编译 2019 年左右的旧版本，首选 VS 2017，我在用 VS 2019 编译旧版本时遇到了兼容问题，可以安装多个版本，构建时显示指定使用的版本。</li>
+</ul>
+<h2 id="depot_tools">depot_tools</h2>
+<p>depot_tools 是开发 Chromium 所需的一系列工具、脚本的集合。</p>
+<h3 id="安装">安装</h3>
+<ul>
+<li>下载 <a href="https://storage.googleapis.com/chrome-infra/depot_tools.zip">https://storage.googleapis.com/chrome-infra/depot_tools.zip</a>。</li>
+<li>解压到任意位置，例如 d:/depot_tools。<br>
+多年的采坑经验告诉我，解压路径层级少一点，不要超长，不要包含中文、空格，就不容易遇到奇怪的问题。</li>
+<li>解压完成后，要检查一下 depot_tools 目录，确认存在 .git 子目录，如果不存需要换一个解压工具，例如 7z。</li>
+</ul>
+<h3 id="配置-git-可选">配置 Git （可选）</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 提交代码需要</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global user.name <span style="color:#e6db74">&#34;ReplaceWithYourUserName&#34;</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global user.email <span style="color:#e6db74">&#34;ReplaceWithYourEmail@chromium.org&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># git 自动转换换行回车</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global core.autocrlf false
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># git 不存储文件权限</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global core.filemode false
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 使用 rebase 合并拉取的代码</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global branch.autosetuprebase always
+</span></span></code></pre></div><h3 id="环境变量">环境变量</h3>
+<ul>
+<li>将 depot_tools 目录加到 PATH，要确保加到 Python 的安装目录前，例如 PATH 的第一项。这会使 depot_tools 目录中的 Python 替代本地安装的 Python，如果你修改的是持久化的环境变量配置，用完后要改回去。</li>
+<li>DEPOT_TOOLS_WIN_TOOLCHAIN 设置为 0，使用本地的 Visual Studio 工具构建 Chrome</li>
+<li>(可选) vs2019_install/vs2017_install/vs2022_install: 设置为 Visual Studio 的安装目录。
+depot_tools 会自动搜索 Visual Studio 安装目录，如果对搜索结果不满意可以用此环境变量显示指定版本和安装目录
+例如，机器上安装了多个 Visual Studio，默认搜索到的可能是 VS 2019，如果你想用 VS 2022 的话，就可以指定 vs2022_install 环境变量。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 这个 URL 目前不需要挂代理，需要代理可以改成:</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Invoke-WebRequest -URI `</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#   https://storage.googleapis.com/chrome-infra/depot_tools.zip `</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#   -Proxy &#34;http://127.0.0.1:8001&#34; -OutFile ./depot_tools.zip</span>
+</span></span><span style="display:flex;"><span>&gt; Invoke-WebRequest -URI <span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>&gt;   https://storage.googleapis.com/chrome-infra/depot_tools.zip <span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>&gt;   -OutFile ./depot_tools.zip
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 解压，需要安装7zip</span>
+</span></span><span style="display:flex;"><span>&gt; 7z x .<span style="color:#ae81ff">\d</span>epot_tools.zip -odepot_tools
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 检查.git子目录存在</span>
+</span></span><span style="display:flex;"><span>&gt; ls .<span style="color:#ae81ff">\d</span>epot_tools<span style="color:#ae81ff">\.</span>git
+</span></span><span style="display:flex;"><span>&gt; cd .<span style="color:#ae81ff">\d</span>epot_tools<span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span><span style="color:#75715e"># 修改环境变量, 仅当前会话生效</span>
+</span></span><span style="display:flex;"><span>&gt; $env:PATH<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$PWD<span style="color:#e6db74">/;</span>$env<span style="color:#e6db74">:PATH&#34;</span>
+</span></span><span style="display:flex;"><span>&gt; $env:DEPOT_TOOLS_WIN_TOOLCHAIN<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># $env:vs2019_install= `</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#   &#34;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community&#34;</span>
+</span></span></code></pre></div><h3 id="配置代理">配置代理</h3>
+<p>depot_tools 需要挂代理才能正常运行，它是多个工具、脚本的集合，代理设置也需要配置多项。</p>
+<h4 id="cipd">CIPD</h4>
+<p>CIPD 是一个包管理工具，depot_tools 用它来下载依赖项，它能够读取环境变量中的代理设置。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; $env:HTTP_PRXOY<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;http://127.0.0.1:8001&#39;</span>
+</span></span><span style="display:flex;"><span>&gt; $env:HTTPS_PRXOY<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;http://127.0.0.1:8001&#39;</span>
+</span></span></code></pre></div><p>用完后清除代理</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; $env:HTTP_PRXOY<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>&gt; $env:HTTPS_PROXY<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;&#39;</span>
+</span></span></code></pre></div><h4 id="git">Git</h4>
+<p>Git 也支持从环境变量读取代理配置，无需额外配置。</p>
+<p>如果环境变量不生效的话，也可以用下面的命令显示给 Git 指定代理。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; git config --global http.proxy <span style="color:#e6db74">&#34;http://127.0.0.1:8001&#34;</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global https.proxy <span style="color:#e6db74">&#34;http://127.0.0.1:8001&#34;</span>
+</span></span></code></pre></div><p>用完后清除代理</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; git config --global --unset-all http.proxy
+</span></span><span style="display:flex;"><span>&gt; git config --global --unset-all https.proxy
+</span></span></code></pre></div><p>还可以参考 <a href="https://gist.github.com/evantoli/f8c23a37eb3558ab8765">https://gist.github.com/evantoli/f8c23a37eb3558ab8765</a> 的办法，仅对 googlesource.com 这个域名设置代理，这样就可以一次设置永久使用了。(域名可能发生变化，以你的实际情况为准)</p>
+<h4 id="gsutil">gsutil</h4>
+<p>gsutil 是 Google 云存储的客户端，被 depot_tools 用来下载依赖，也需要额外配置代理。</p>
+<ul>
+<li>创建如下.boto文件</li>
+</ul>
+<pre tabindex="0"><code>[Boto]
+proxy = 127.0.0.1
+proxy_port = 8001
+proxy_type = http
+</code></pre><ul>
+<li>设置环境变量 NO_AUTH_BOTO_CONFIG，为 .boto 文件的全路径</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; $env:NO_AUTH_BOTO_CONFIG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$PWD<span style="color:#e6db74">/.boto&#34;</span>
+</span></span></code></pre></div><h3 id="初始化">初始化</h3>
+<p>设置好代理后，第一次运行 gclient，gclient 会自动安装所需的依赖。如果代理设置的都没有问题的话，稍等一会就会看到 gclient 输出使用帮助。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; gclient
+</span></span><span style="display:flex;"><span>WARNING: Your metrics.cfg file was invalid or nonexistent. A new one will be created.
+</span></span><span style="display:flex;"><span>Usage: gclient.py &lt;command&gt; <span style="color:#f92672">[</span>options<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Meta checkout dependency manager <span style="color:#66d9ef">for</span> Git.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Commands are:
+</span></span><span style="display:flex;"><span>  config   creates a .gclient file in the current directory
+</span></span><span style="display:flex;"><span>  diff     displays local diff <span style="color:#66d9ef">for</span> every dependencies
+</span></span><span style="display:flex;"><span>  fetch    fetches upstream commits <span style="color:#66d9ef">for</span> all modules
+</span></span><span style="display:flex;"><span>  flatten  flattens the solutions into a single DEPS file
+</span></span><span style="display:flex;"><span>  getdep   gets revision information and variable values from a DEPS file
+</span></span><span style="display:flex;"><span>  grep     greps through git repos managed by gclient
+</span></span><span style="display:flex;"><span>  help     prints list of commands or help <span style="color:#66d9ef">for</span> a specific command
+</span></span><span style="display:flex;"><span>  metrics  reports, and optionally modifies, the status of metric collection
+</span></span><span style="display:flex;"><span>  pack     generates a patch which can be applied at the root of the tree
+</span></span><span style="display:flex;"><span>  recurse  operates <span style="color:#f92672">[</span>command args ...<span style="color:#f92672">]</span> on all the dependencies
+</span></span><span style="display:flex;"><span>  revert   reverts all modifications in every dependencies
+</span></span><span style="display:flex;"><span>  revinfo  outputs revision info mapping <span style="color:#66d9ef">for</span> the client and its dependencies
+</span></span><span style="display:flex;"><span>  root     outputs the solution root <span style="color:#f92672">(</span>or current dir <span style="color:#66d9ef">if</span> there isn<span style="color:#e6db74">&#39;t one)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  runhooks runs hooks for files that have been modified in the local working copy
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  setdep   modifies dependency revisions and variable values in a DEPS file
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  status   shows modification status for every dependencies
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  sync     checkout/update all modules
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  validate validates the .gclient and DEPS syntax
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  verify   verifies the DEPS file deps are only from allowed_hosts
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Options:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  --version             show program&#39;</span>s version number and exit
+</span></span><span style="display:flex;"><span>  -h, --help            show this help message and exit
+</span></span><span style="display:flex;"><span>  -j JOBS, --jobs<span style="color:#f92672">=</span>JOBS  Specify how many SCM commands can run in parallel;
+</span></span><span style="display:flex;"><span>                        defaults to <span style="color:#ae81ff">12</span> on this machine
+</span></span><span style="display:flex;"><span>  -v, --verbose         Produces additional output <span style="color:#66d9ef">for</span> diagnostics. Can be
+</span></span><span style="display:flex;"><span>                        used up to three times <span style="color:#66d9ef">for</span> more logging info.
+</span></span><span style="display:flex;"><span>  --gclientfile<span style="color:#f92672">=</span>CONFIG_FILENAME
+</span></span><span style="display:flex;"><span>                        Specify an alternate .gclient file
+</span></span><span style="display:flex;"><span>  --spec<span style="color:#f92672">=</span>SPEC           create a gclient file containing the provided string.
+</span></span><span style="display:flex;"><span>                        Due to Cygwin/Python brokenness, it can<span style="color:#960050;background-color:#1e0010">&#39;</span>t contain any
+</span></span><span style="display:flex;"><span>                        newlines.
+</span></span><span style="display:flex;"><span>  --no-nag-max          Ignored <span style="color:#66d9ef">for</span> backwards compatibility.
+</span></span></code></pre></div><hr>
+<p><strong>ℹ️NOTE</strong></p>
+<ul>
+<li>文档要求在 cmd.exe 中构建 Chromium，但我介绍的都是在 PWSH 中运行的方法，我使用的 PWSH 版本如下：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; $PSVersionTable
+</span></span><span style="display:flex;"><span>Name                           Value
+</span></span><span style="display:flex;"><span>----                           -----
+</span></span><span style="display:flex;"><span>PSVersion                      7.2.1
+</span></span><span style="display:flex;"><span>PSEdition                      Core
+</span></span><span style="display:flex;"><span>GitCommitId                    7.2.1
+</span></span><span style="display:flex;"><span>OS                             Microsoft Windows 10.0.19043
+</span></span><span style="display:flex;"><span>Platform                       Win32NT
+</span></span><span style="display:flex;"><span>PSCompatibleVersions           <span style="color:#f92672">{</span>1.0, 2.0, 3.0, 4.0…<span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>PSRemotingProtocolVersion      2.3
+</span></span><span style="display:flex;"><span>SerializationVersion           1.1.0.1
+</span></span><span style="display:flex;"><span>WSManStackVersion              3.0
+</span></span></code></pre></div><ul>
+<li>整个过程中需要走代理的流量还是很大的，如果你使用的是按流量计费的代理，代理提供商一般有提供不记流量的低速节点。</li>
+<li>附上 depot 的<a href="https://youglish.com/pronounce/depot/english/us?">读音</a></li>
+</ul>
+<hr>
+<h2 id="下载chromium源码">下载Chromium源码</h2>
+<ul>
+<li>在任意位置，新建 Chromium 目录，例如 D:/Chromium。</li>
+<li>切换到新创建的目录，使用 fetch 命令下载代码，网络不好的话，可以指定 --no-history 命令行，忽略 commit 历史，减小了要下载文件的体积，命令执行成功后代码在 src 子目录</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; mkdir chromium <span style="color:#f92672">&amp;&amp;</span> cd chromium
+</span></span><span style="display:flex;"><span>&gt; fetch --no-history chromium
+</span></span></code></pre></div><p>看到代码拉取正常开始以后，就可以去看一季电视剧了😂。不知道是不是我的代理网络太慢了，我用了 5 个小时左右才完成。</p>
+<h2 id="构建">构建</h2>
+<ul>
+<li>确认磁盘有足够的空间，我这里构建完成后 out/Default 目录占用 52 GiB，depot_tools + chromium 总共占用 74 GiB 左右</li>
+<li><code>cd src</code> 切换到 src 目录</li>
+<li><code>gn args out/Default</code> ，在弹出的记事本中填入下面的配置，保存后关闭记事本</li>
+</ul>
+<pre tabindex="0"><code>is_component_build = true
+enable_nacl = false
+v8_optimized_debug = false
+</code></pre><ul>
+<li>等待 GN 执行，GN 会在 out/Default 目录，生成构建所需的文件</li>
+<li>(可选) 把 chromium 目录，加入到杀毒软件的白名单，防止杀毒软件在构建过程中不断扫描构建产物，拖慢构建速度</li>
+<li><code>autoninja -C out\Default chrome</code> 用 ninja 构建 chrome，又需要几个小时。</li>
+<li>构建期间已经不再需要代理了。</li>
+</ul>
+<p>编译完成后，可以在 out/Default 目录找到编译好的 chrome.exe。</p>
+<p>默认编译出来的是 Debug 版，要编译 Release 版的话，配置改成：</p>
+<pre tabindex="0"><code>is_component_build = true
+is_debug = false
+enable_nacl = false
+dcheck_always_on = true
+</code></pre><p>Debug 版和 Release 版可以在两个不同的目录中共存，例如把两个版本分别放到 out/Default 和 out/Release。是否可以同时编译，这个我还没试过，有需求的读者可以测试一下。</p>
+<hr>
+<p><strong>ℹ️NOTE</strong></p>
+<ul>
+<li>Chromium 构建用到了 GN 和 Ninja 两个构建工具。<br>
+GN 属于元构建工具，它并不实际执行构建，而是输出 Ninja、VS 等工具使用的描述文件，GN 的优点是描述文件适合手工编写。 <br>
+Ninja 则侧重供底层构建能力，提升构建速度，一般配合 GN、CMake 之类的元构建工具使用。</li>
+<li>GN 仅需运行一次，之后仅执行 Ninja 命令即可，Ninja 会在必要时自动调用 GN。</li>
+</ul>
+<hr>
+<h2 id="生成-visual-studio-解决方案-可选">生成 Visual Studio 解决方案 （可选）</h2>
+<p>可以用 <code>gn gen --ide=vs</code> 生成包含所有代码的 VS 解决方案，但是这样生成的解决方案太大了，使用起来很不方便，推荐用 --filter 和 --no-deps 命令行限定解决方案包含的范围。</p>
+<p>例如：用如下命令生成包含 v8、base 和 blink 的解决方案 out/Default/v8_blink.sln。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; gn gen --ide<span style="color:#f92672">=</span>vs --filters<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;//v8/*;//base/*;//third_party//blink/*&#39;</span> <span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>  --no-deps --sln<span style="color:#f92672">=</span>blink_v8 out<span style="color:#ae81ff">\D</span>efault
+</span></span></code></pre></div><p>推荐阅读<a href="https://gn.googlesource.com/gn/+/master/docs/reference.md#cmd_gen"> GN 的帮助</a> 和 <a href="https://www.chromium.org/developers/how-tos/visualstudio-tricks/">VisualStudio Tricks</a> 了解更多技巧。</p>
+<ul class="pa0">
+  
+   <li class="list di">
+     <a href="/tags/chromium/" class="link f5 grow no-underline br-pill ba ph3 pv2 mb2 dib black sans-serif">Chromium</a>
+   </li>
+  
+   <li class="list di">
+     <a href="/tags/pwn/" class="link f5 grow no-underline br-pill ba ph3 pv2 mb2 dib black sans-serif">Pwn</a>
+   </li>
+  
+   <li class="list di">
+     <a href="/tags/v8/" class="link f5 grow no-underline br-pill ba ph3 pv2 mb2 dib black sans-serif">V8</a>
+   </li>
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+  <div class="bg-light-gray pa3 nested-list-reset nested-copy-line-height nested-links">
+    <p class="f5 b mb3">Related</p>
+    <ul class="pa0 list">
+	   
+	     <li  class="mb2">
+          <a href="/posts/2022-05-31-get-old-version-chrome-binary/">获取旧版本的 Chrome</a>
+        </li>
+	    
+    </ul>
+</div>
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://localhost:1313/" >
+    &copy;  My New Hugo Site 2024 
+  </a>
+    <div><div class="ananke-socials"></div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>

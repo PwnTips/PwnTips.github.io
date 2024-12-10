@@ -1,0 +1,9 @@
+{
+  "vimMode": true,
+  "spellcheck": true,
+  "readableLineLength": true,
+  "legacyEditor": false,
+  "spellcheckLanguages": null,
+  "livePreview": true,
+  "attachmentFolderPath": "assets/images"
+}
