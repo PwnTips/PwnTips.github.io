@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>My New Hugo Site</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="">
+    <meta name="generator" content="Hugo 0.139.2">
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+    
+
+    
+      
+
+    
+
+    
+    
+      <link href="/posts/index.xml" rel="alternate" type="application/rss+xml" title="My New Hugo Site" />
+      <link href="/posts/index.xml" rel="feed" type="application/rss+xml" title="My New Hugo Site" />
+      
+    
+
+    
+      <link rel="canonical" href="http://localhost:1313/posts/">
+    
+
+    <meta property="og:url" content="http://localhost:1313/posts/">
+  <meta property="og:site_name" content="My New Hugo Site">
+  <meta property="og:title" content="Posts">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="website">
+
+  <meta itemprop="name" content="Posts">
+  <meta itemprop="datePublished" content="2024-11-29T16:25:02+08:00">
+  <meta itemprop="dateModified" content="2024-11-29T16:25:02+08:00">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Posts">
+
+	
+  </head><body class="ma0 avenir bg-near-white development">
+
+    
+
+  <header>
+    <div class="pb3-m pb6-l bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        My New Hugo Site
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      <div class="ananke-socials"></div>
+
+    </div>
+  </div>
+</nav>
+
+      <div class="tc-l pv3 ph3 ph4-ns">
+        <h1 class="f2 f-subheadline-l fw2 light-silver mb0 lh-title">
+          Posts
+        </h1>
+        
+      </div>
+    </div>
+  </header>
+
+
+    <main class="pb7" role="main">
+      
+  <article class="pa3 pa4-ns nested-copy-line-height">
+    <section class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy mid-gray"></section>
+    <section class="flex-ns flex-wrap justify-around mt5">
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-05-18-cve-2021-37975/" class="link black dim">
+        分析 CVE-2021-37975
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>继续分析 Chrome 在野利用，这次分析 <a href="https://googleprojectzero.github.io/0days-in-the-wild//0day-RCAs/2021/CVE-2021-37975.html">CVE-2021-37975</a>，这个漏洞是 GC 组件中的代码逻辑问题，可以导致释放后重利用。正好通过分析这个漏洞了解一下 v8 的 GC 实现，以及释放后重利用漏洞的利用策略。</p>
+<h2 id="复现">复现</h2>
+<p>阅读<a href="https://googleprojectzero.github.io/0days-in-the-wild//0day-RCAs/2021/CVE-2021-37975.html">报告</a>得知低于 94.0.4606.71 的 Chrome 受此漏洞影响，搜索 <a href="https://chromereleases.googleblog.com/2021/09/">2021 年 9月 的 Chrome 发布记录</a> 找到 94.0.4606.61，从源码构建出此版本 Chrome。</p>
+<pre tabindex="0"><code>git fetch --depth 1 `
+https://chromium.googlesource.com/chromium/src.git `
++refs/tags/94.0.4606.61:chromium_94.0.4606.61
+
+git checkout tags/94.0.4606.61
+gclient sync -v
+gclient sync --with_branch_heads
+gclient runhooks
+</code></pre><pre tabindex="0"><code>gn args out/CVE-2021-37975
+ninja -C out/CVE-2021-37975 chrome
+</code></pre><hr>
+<p><strong>ℹ️NOTE</strong>: sync 过程中我遇到了 v8 rebase 冲突的问题，没找到导致冲突的原因，只好采用比较笨的办法，把 v8 目录删掉后重新运行 <code>gclient sync -v</code>，这样 gclient 新同步了一份 v8 代码就可以了。</p>
+<hr>
+<p>提取报告中的 POC 代码，用 <code>python -m http.server</code> 搭建一个可以触发漏洞的本地站点。</p>
+    </div>
+    <a href="/posts/2022-05-18-cve-2021-37975/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2023-05-07-cve-2022-1364/" class="link black dim">
+        分析 CVE-2022-1363
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>从 <a href="https://googleprojectzero.github.io/0days-in-the-wild//0day-RCAs/2022/CVE-2022-1364.html">https://googleprojectzero.github.io/0days-in-the-wild//0day-RCAs/2022/CVE-2022-1364.html</a> 得到漏洞影响的 Chrome 版本以及 POC 代码。</p>
+<h2 id="复现">复现</h2>
+<p>从 <a href="https://vikyd.github.io/download-chromium-history-version/#/">https://vikyd.github.io/download-chromium-history-version/#/</a> 搜索到一个距修复版本比较近的版本 100.0.4896.124 的官方备份 <a href="https://commondatastorage.googleapis.com/chromium-browser-snapshots/index.html?prefix=Win_x64/972766/">https://commondatastorage.googleapis.com/chromium-browser-snapshots/index.html?prefix=Win_x64/972766/</a></p>
+<p>./Chrome.exe &ndash;js-flags=&quot;&ndash;allow-natives-syntax&quot; &ndash;no-sandbox &ndash;enable-logging=stderr 启动 Chrome，访问 POC 页面 index.html。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-html" data-lang="html"><span style="display:flex;"><span>&lt;<span style="color:#f92672">body</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;<span style="color:#f92672">script</span>&gt;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">foo</span>(<span style="color:#a6e22e">bug</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">C</span>(<span style="color:#a6e22e">z</span>) {
+</span></span><span style="display:flex;"><span>    Error.<span style="color:#a6e22e">prepareStackTrace</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">t</span>, <span style="color:#a6e22e">B</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">B</span>[<span style="color:#a6e22e">z</span>].<span style="color:#a6e22e">getThis</span>();
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> <span style="color:#a6e22e">p</span> <span style="color:#f92672">=</span> Error().<span style="color:#a6e22e">stack</span>;
+</span></span><span style="display:flex;"><span>    Error.<span style="color:#a6e22e">prepareStackTrace</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">p</span>;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">J</span>() {}
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">optim</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">opt</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Function(
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">&#39;a&#39;</span>, <span style="color:#e6db74">&#39;b&#39;</span>, <span style="color:#e6db74">&#39;c&#39;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">&#39;if(typeof a===\&#39;number\&#39;){if(a&gt;2){for(var i=0;i&lt;100;i++);return;}b.d(a,b,1);return}&#39;</span> <span style="color:#f92672">+</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#e6db74">&#39;g++;&#39;</span>.<span style="color:#a6e22e">repeat</span>(<span style="color:#ae81ff">70</span>));
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">e</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">J</span>.<span style="color:#a6e22e">prototype</span>.<span style="color:#a6e22e">d</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Function(
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">&#39;a&#39;</span>, <span style="color:#e6db74">&#39;b&#39;</span>, <span style="color:#e6db74">&#39;&#34;use strict&#34;;b.a.call(arguments,b);return arguments[a];&#39;</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">J</span>.<span style="color:#a6e22e">prototype</span>.<span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Function(<span style="color:#e6db74">&#39;a&#39;</span>, <span style="color:#e6db74">&#39;a.b(0,a)&#39;</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">J</span>.<span style="color:#a6e22e">prototype</span>.<span style="color:#a6e22e">b</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Function(
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">&#39;a&#39;</span>, <span style="color:#e6db74">&#39;b&#39;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#e6db74">&#39;b.c();if(a){&#39;</span> <span style="color:#f92672">+</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#e6db74">&#39;g++;&#39;</span>.<span style="color:#a6e22e">repeat</span>(<span style="color:#ae81ff">70</span>) <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39;}&#39;</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">J</span>.<span style="color:#a6e22e">prototype</span>.<span style="color:#a6e22e">c</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">function</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">optim</span>) {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">z</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">C</span>(<span style="color:#ae81ff">3</span>);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">p</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">C</span>(<span style="color:#ae81ff">3</span>);
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">z</span>[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">e</span> <span style="color:#f92672">=</span> {<span style="color:#a6e22e">M</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">z</span>, <span style="color:#a6e22e">C</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">p</span>};
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  };
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">a</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">J</span>();
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// jit optim
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">if</span> (<span style="color:#a6e22e">bug</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">V</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; <span style="color:#ae81ff">1E4</span> <span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">V</span>; <span style="color:#a6e22e">V</span><span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>       <span style="color:#a6e22e">opt</span>(<span style="color:#ae81ff">0</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">V</span> <span style="color:#f92672">%</span> <span style="color:#ae81ff">4</span> <span style="color:#f92672">?</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">:</span> <span style="color:#ae81ff">4</span>, <span style="color:#a6e22e">a</span>, <span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">optim</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">opt</span>(<span style="color:#ae81ff">1</span>, <span style="color:#a6e22e">a</span>, <span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">e</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">e1</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">foo</span>(<span style="color:#66d9ef">false</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">e1</span>.<span style="color:#a6e22e">M</span> <span style="color:#f92672">===</span> <span style="color:#a6e22e">e1</span>.<span style="color:#a6e22e">C</span>); <span style="color:#75715e">// prints true.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">e2</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">foo</span>(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">e2</span>.<span style="color:#a6e22e">M</span> <span style="color:#f92672">===</span> <span style="color:#a6e22e">e2</span>.<span style="color:#a6e22e">C</span>); <span style="color:#75715e">// should be true as above but prints false.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>&lt;/<span style="color:#f92672">script</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#f92672">body</span>&gt;
+</span></span></code></pre></div><p>可以看到，两次 console.log 分别输出 true 和 false。</p>
+    </div>
+    <a href="/posts/2023-05-07-cve-2022-1364/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-07-19-afl-plus-plus-usage/" class="link black dim">
+        学习使用 AFL&#43;&#43;
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>目前热度最高的漏洞挖掘方法应该就是 Fuzzing 了，本文记录我学习使用 AFL++ 来 Fuzzing 开源的音频文件标签处理库 <a href="https://taglib.org/">taglib</a> 的过程。</p>
+<h2 id="构建-afl">构建 AFL++</h2>
+<p>参考<a href="https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/INSTALL.md">官方文档</a>即可，同时要注意：</p>
+<ul>
+<li>AFL++ 支持的功能很丰富，考虑到大部分人不会用到所有功能，构建也是提供了不同的可选集合的，比如我只需要 llvm 的 instrumentation，就用 <code>make all</code> 即可，文档里已经描述的很清楚了。</li>
+<li>如果需要 <code>llvm/gcc</code> 以外的一些功能，构建过程中可能从 github/google 服务器拉取依赖代码，推荐挂好梯子</li>
+<li>先装好依赖确认 llvm-config/LLVM_CONFIG 可以正常使用后再去构建 AFL++，否则可能出现虽然构建成功了，但较新的 llvm 功能没有被构建到程序中的情况。</li>
+<li>构建完成后，运行 <code>make install</code>，将 afl++ 安装到 /usr/local/bin 目录</li>
+</ul>
+<h2 id="构建-harness">构建 harness</h2>
+<p>harness 是被 fuzzing 的程序，它会被 fuzzer 运行，负责执行待 fuzzing 的代码，同时采集代码覆盖信息反馈给 fuzzer。</p>
+<p>对于 taglib 来说，examples 目录下提供的 tagreader 程序，可以打开通过参数指定的音频文件，列出文件中包含的 tag，就可以直接作为 harmess 来使用。不过 fuzzing 过程中，会重复的打开文件，修改文件，如果每次打开一个文件都要重启程序，执行效率不高，我按照<a href="https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.persistent_mode.md">官方文档 persist_mode </a> 中提到的方法，对 tagreader.cpp 稍加修改，把它改成了启动后可以持续解析同一个文件的程序，这样省下了很多进程初始化的时间，提升了 fuzzing 效率。</p>
+<p>其实还可以进一步优化，采用内存映射的方式读取数据，这样映射一次后，数据就驻留在内存（数据总量很大时也可能是交换文件）中了，省去读取文件的时间。</p>
+<p>这里我先尝试用标版的 clang 构建出未修改的 tagreader，成功后再用 afl++ 的 llvm lto 模式构建了 perisst_mode 的 tagreader。这部分的构建官方文档我怀疑有部分内容过时了，对于 taglib 来说 lto 模式构建也很简单，如下操作即可：</p>
+    </div>
+    <a href="/posts/2022-07-19-afl-plus-plus-usage/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-03-20-build-chromium/" class="link black dim">
+        构建 Chromium（墙内）
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>本文记录在 Windows 系统构建 Chromium 的过程，方法完全抄袭自 <a href="https://chromium.googlesource.com/chromium/src/+/HEAD/docs/windows_build_instructions.md">官方文档</a>，仅加入一些代理配置相关的内容。</p>
+<h2 id="致谢">致谢</h2>
+<p>多谢 GFW，把简单的事情变得复杂，让我们人生多了一些历练的机会🙃。</p>
+<h2 id="visual-studio">Visual Studio</h2>
+<ul>
+<li>至少需要 VS 2017，推荐使用 VS 2019，我用的版本是 VS 2019 Version 16.11.9。</li>
+<li>需要装 Desktop development with C++、MFC、ATL 这几个组件</li>
+<li>Windows SDK 版本要高于 10.0.19041，对于 VS 2019 来说默认就是满足的，不放心的话构建前可以先更新下。</li>
+<li>如果是编译 2019 年左右的旧版本，首选 VS 2017，我在用 VS 2019 编译旧版本时遇到了兼容问题，可以安装多个版本，构建时显示指定使用的版本。</li>
+</ul>
+<h2 id="depot_tools">depot_tools</h2>
+<p>depot_tools 是开发 Chromium 所需的一系列工具、脚本的集合。</p>
+<h3 id="安装">安装</h3>
+<ul>
+<li>下载 <a href="https://storage.googleapis.com/chrome-infra/depot_tools.zip">https://storage.googleapis.com/chrome-infra/depot_tools.zip</a>。</li>
+<li>解压到任意位置，例如 d:/depot_tools。<br>
+多年的采坑经验告诉我，解压路径层级少一点，不要超长，不要包含中文、空格，就不容易遇到奇怪的问题。</li>
+<li>解压完成后，要检查一下 depot_tools 目录，确认存在 .git 子目录，如果不存需要换一个解压工具，例如 7z。</li>
+</ul>
+<h3 id="配置-git-可选">配置 Git （可选）</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 提交代码需要</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global user.name <span style="color:#e6db74">&#34;ReplaceWithYourUserName&#34;</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global user.email <span style="color:#e6db74">&#34;ReplaceWithYourEmail@chromium.org&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># git 自动转换换行回车</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global core.autocrlf false
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># git 不存储文件权限</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global core.filemode false
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 使用 rebase 合并拉取的代码</span>
+</span></span><span style="display:flex;"><span>&gt; git config --global branch.autosetuprebase always
+</span></span></code></pre></div><h3 id="环境变量">环境变量</h3>
+<ul>
+<li>将 depot_tools 目录加到 PATH，要确保加到 Python 的安装目录前，例如 PATH 的第一项。这会使 depot_tools 目录中的 Python 替代本地安装的 Python，如果你修改的是持久化的环境变量配置，用完后要改回去。</li>
+<li>DEPOT_TOOLS_WIN_TOOLCHAIN 设置为 0，使用本地的 Visual Studio 工具构建 Chrome</li>
+<li>(可选) vs2019_install/vs2017_install/vs2022_install: 设置为 Visual Studio 的安装目录。
+depot_tools 会自动搜索 Visual Studio 安装目录，如果对搜索结果不满意可以用此环境变量显示指定版本和安装目录
+例如，机器上安装了多个 Visual Studio，默认搜索到的可能是 VS 2019，如果你想用 VS 2022 的话，就可以指定 vs2022_install 环境变量。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 这个 URL 目前不需要挂代理，需要代理可以改成:</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Invoke-WebRequest -URI `</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#   https://storage.googleapis.com/chrome-infra/depot_tools.zip `</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#   -Proxy &#34;http://127.0.0.1:8001&#34; -OutFile ./depot_tools.zip</span>
+</span></span><span style="display:flex;"><span>&gt; Invoke-WebRequest -URI <span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>&gt;   https://storage.googleapis.com/chrome-infra/depot_tools.zip <span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>&gt;   -OutFile ./depot_tools.zip
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 解压，需要安装7zip</span>
+</span></span><span style="display:flex;"><span>&gt; 7z x .<span style="color:#ae81ff">\d</span>epot_tools.zip -odepot_tools
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 检查.git子目录存在</span>
+</span></span><span style="display:flex;"><span>&gt; ls .<span style="color:#ae81ff">\d</span>epot_tools<span style="color:#ae81ff">\.</span>git
+</span></span><span style="display:flex;"><span>&gt; cd .<span style="color:#ae81ff">\d</span>epot_tools<span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span><span style="color:#75715e"># 修改环境变量, 仅当前会话生效</span>
+</span></span><span style="display:flex;"><span>&gt; $env:PATH<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$PWD<span style="color:#e6db74">/;</span>$env<span style="color:#e6db74">:PATH&#34;</span>
+</span></span><span style="display:flex;"><span>&gt; $env:DEPOT_TOOLS_WIN_TOOLCHAIN<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># $env:vs2019_install= `</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#   &#34;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community&#34;</span>
+</span></span></code></pre></div><h3 id="配置代理">配置代理</h3>
+<p>depot_tools 需要挂代理才能正常运行，它是多个工具、脚本的集合，代理设置也需要配置多项。</p>
+    </div>
+    <a href="/posts/2022-03-20-build-chromium/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-12-05-inc-dev-fuzzer/" class="link black dim">
+        渐进式的开发一个 fuzzer (WIP)
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>最近看了一些增量开发编译器的文章后，我就想到我也可以增量开发一个 fuzzer：</p>
+<ul>
+<li>开发过程由很多轮的迭代组成</li>
+<li>每一轮迭代周期都尽量短，根据每轮的复杂度可能是几小时到几周时间</li>
+<li>每一轮迭代产出的都是一个可用的 fuzzer</li>
+<li>每轮迭代的产出不需要是一个完美的解决方案，首先保证可用性，复杂的问题甚至可以先考虑部分解。</li>
+<li>为了保证每一轮迭代开发工作量尽可能少，我会倾向于先使用开源的库，如果有必要的话，再把开源的库替换成自己开发的。</li>
+<li></li>
+<li>我选择的目标是开源项目 mujs，给它写一个 generation-based fuzzer，开发语言选择 python</li>
+</ul>
+<hr>
+<p>⚠️ 增量开发编译的文章：</p>
+<ul>
+<li><a href="http://scheme2006.cs.uchicago.edu/11-ghuloum.pdf">An Incremental Approach to Compiler Construction</a></li>
+<li><a href="https://github.com/awesome-kusion/rust-toy-lang-book">用 Rust 开发编程语言</a></li>
+</ul>
+<hr>
+<h2 id="准备">准备</h2>
+<h2 id="第一轮">第一轮</h2>
+<p>babystep 一定要走稳，第一轮就只实现用 mujs 执行一段固定的程序，监控一下 mujs 是否崩溃即可。</p>
+    </div>
+    <a href="/posts/2022-12-05-inc-dev-fuzzer/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-05-31-get-old-version-chrome-binary/" class="link black dim">
+        获取旧版本的 Chrome
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>复现 Chrome 漏洞肯定需要要先拿到受影响的旧版程序，本文记录两种获取任意版本 Chrome 文件的方法：</p>
+<ul>
+<li>从源码构建，优点是可以得到 Debug 版的文件便于调试，缺点是需要花很长时间。</li>
+<li>Chromium 团队维护了一份旧版 Chrome 的备份，包含调试符号，可以用来调试。缺点是备份只有 Release 版，且有部分版本是没有备份的，需要用临近版本替代。</li>
+</ul>
+<h2 id="构建">构建</h2>
+<p>构建方法参考了<a href="https://chromium.googlesource.com/chromium/src/+/master/docs/building_old_revisions.md">官方文档</a>和<a href="https://stackoverflow.com/questions/47087970/how-to-checkout-and-build-specific-chromium-tag-branch-without-download-the-full"> StackOverflow 上的回答</a>。</p>
+<h3 id="获取指定版本的源码">获取指定版本的源码</h3>
+<p>由于网络环境恶略，我只下载指定 Tag 的代码，不下载历史 Commit。
+网络环境好的话，可以去掉 <code>--deph 1</code> 选项，下载完整的 Commit 记录，避免不必要的问题。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 把tags/ 和 chromium_ 后面的 Major.Minor.Patch.Build 形式的版本号替换成你需要的版本</span>
+</span></span><span style="display:flex;"><span>&gt; git fetch <span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>&gt;  https://chromium.googlesource.com/chromium/src.git <span style="color:#e6db74">`</span>
+</span></span><span style="display:flex;"><span>&gt;  +refs/tags/59.0.3071.115:chromium_59.0.3071.115 --depth <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>&gt; git checkout tags/59.0.3071.115
+</span></span></code></pre></div><hr>
+<p><strong>ℹ️NOTE</strong>: 构建脚本需要从上一个 Commit 获取时间戳，不下载历史 Commit 就需要在构建时手工修正这个时间戳，后面会介绍修正方法。</p>
+<hr>
+<h3 id="depot_tools-切换到对应的版本可选">depot_tools 切换到对应的版本（可选）</h3>
+<p>把 depot_tools 切换到和源码对应的版本，防止兼容性问题。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># chrome 源码的时间戳</span>
+</span></span><span style="display:flex;"><span>~/chrome/src &gt; git log -n <span style="color:#ae81ff">1</span> --pretty<span style="color:#f92672">=</span>format:%ci
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># depot_tools 切换到对应时间的 commit</span>
+</span></span><span style="display:flex;"><span>~/depot_tools &gt; git rev-list -n <span style="color:#ae81ff">1</span> --before<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;上一步获取的时间戳&#34;</span> main
+</span></span><span style="display:flex;"><span>~/depot_tools &gt; git checkout 上一步获取的 Commit
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 禁用 depot_tools 自动更新</span>
+</span></span><span style="display:flex;"><span>~/depot_tools &gt; $env:DEPOT_TOOLS_UPDATE<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>
+</span></span></code></pre></div><h3 id="同步依赖">同步依赖</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 清理历史文件</span>
+</span></span><span style="display:flex;"><span>&gt; git clean -ffd
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 下载依赖</span>
+</span></span><span style="display:flex;"><span>&gt; gclient syn -D --force --reset
+</span></span></code></pre></div><h3 id="构建-1">构建</h3>
+<p>参考 <a href="./2022-03-20-build-chromium">墙内构建 Chromium</a> 用 GN 和 Ninja 执行构建。</p>
+    </div>
+    <a href="/posts/2022-05-31-get-old-version-chrome-binary/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+    </section>
+    <ul class="pagination pagination-default">
+      <li class="page-item">
+        <a href="/posts/" aria-label="First" class="page-link" role="button"><span aria-hidden="true">&laquo;&laquo;</span></a>
+      </li>
+      <li class="page-item">
+        <a href="/posts/page/2/" aria-label="Previous" class="page-link" role="button"><span aria-hidden="true">&laquo;</span></a>
+      </li>
+      <li class="page-item">
+        <a href="/posts/" aria-label="Page 1" class="page-link" role="button">1</a>
+      </li>
+      <li class="page-item">
+        <a href="/posts/page/2/" aria-label="Page 2" class="page-link" role="button">2</a>
+      </li>
+      <li class="page-item active">
+        <a aria-current="page" aria-label="Page 3" class="page-link" role="button">3</a>
+      </li>
+      <li class="page-item disabled">
+        <a aria-disabled="true" aria-label="Next" class="page-link" role="button" tabindex="-1"><span aria-hidden="true">&raquo;</span></a>
+      </li>
+      <li class="page-item disabled">
+        <a aria-disabled="true" aria-label="Last" class="page-link" role="button" tabindex="-1"><span aria-hidden="true">&raquo;&raquo;</span></a>
+      </li>
+    </ul></article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://localhost:1313/" >
+    &copy;  My New Hugo Site 2024 
+  </a>
+    <div><div class="ananke-socials"></div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>

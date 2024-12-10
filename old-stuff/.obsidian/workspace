@@ -1,0 +1,103 @@
+{
+  "main": {
+    "id": "b4eabb500319f3f8",
+    "type": "split",
+    "children": [
+      {
+        "id": "048bcbc679a8da72",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "_posts/2022-05-31-get-old-version-chrome-binary.md",
+            "mode": "source",
+            "source": false
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "0181446470756549",
+    "type": "split",
+    "children": [
+      {
+        "id": "85d61ffeff029692",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b59aec11bee14705",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "599f314ce6eb8ed8",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "gn args ",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 316.5
+  },
+  "right": {
+    "id": "4ab962d3a0fb7595",
+    "type": "split",
+    "children": [
+      {
+        "id": "9e2a99a1fc7787eb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d486091e7b8eb779",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "_posts/2022-05-31-get-old-version-chrome-binary.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "active": "048bcbc679a8da72",
+  "lastOpenFiles": [
+    "_posts/2022-06-08-chromium-build-error.md",
+    "_posts/2022-03-20-build-chromium.md",
+    "_posts/2022-10-23-CVE-2022-1096.md",
+    "_posts/2022-04-30-CTF-oob-v8.md",
+    "_posts/2022-06-11-plantuml-source-code.md",
+    "_posts/2022-06-24-v8-parameters.md",
+    "_posts/2022-07-19-afl-plus-plus-usage.md",
+    "_posts/2022-07-20-dynamo-rio-options.md",
+    "_posts/2022-08-03-ida-pro-cpp-tips-collection.md",
+    "_posts/2022-09-15-v8-IR-struct.md"
+  ]
+}

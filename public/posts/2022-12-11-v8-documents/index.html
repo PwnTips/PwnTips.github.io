@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>v8 资料汇总 | My New Hugo Site</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="V8 资料汇总
+v8 的资料虽然很多，但是很多是非官方的资料，或者没有一个统一的所搜入口，今天在 v8-dev 用户组发现一个不错的帖子，里面包含一些我以前没搜到过的资料，我就想我干脆自己整理一份，把我觉得非常值得读的资料都列到一篇文章里，以后不断更新。
+12.12.11 更新
+![截图](Pasted image 20221211203015.png)
+From: https://groups.google.com/g/v8-dev/c/J-lbjGeu6Yw
+
+The best way to start with V8 is to play around &ldquo;hello world&rdquo; at https://v8.dev/docs/embed to find out the basics.   &ndash; 这篇是 v8 团队发的官方文章，大体上是讲怎么把 v8 当作嵌入式解释器使用，中间讲了很多 v8 的基本概念，入门必读。
+Then, https://github.com/thlorenz/v8-perf/blob/master/README.md will give you some links to find out how V8 works internally  - 包含介绍 v8 内部实现的很多内容，包括很多 v8 团队发布很多 talk 的视频和文档，我今天刚知道这个，还没仔细看
+https://v8.dev/docs will explain some workflows to use. - 官方文档，也包括了 v8 个方面的内容，和第二个有一些内容是重复的，例如想了解 turbofan 可以看 https://v8.dev/docs/turbofan ，个人感觉第二个的导航做的更好一些。
+">
+    <meta name="generator" content="Hugo 0.139.2">
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+    
+
+    
+      
+
+    
+
+    
+
+    
+      <link rel="canonical" href="http://localhost:1313/posts/2022-12-11-v8-documents/">
+    
+
+    <meta property="og:url" content="http://localhost:1313/posts/2022-12-11-v8-documents/">
+  <meta property="og:site_name" content="My New Hugo Site">
+  <meta property="og:title" content="v8 资料汇总">
+  <meta property="og:description" content="V8 资料汇总 v8 的资料虽然很多，但是很多是非官方的资料，或者没有一个统一的所搜入口，今天在 v8-dev 用户组发现一个不错的帖子，里面包含一些我以前没搜到过的资料，我就想我干脆自己整理一份，把我觉得非常值得读的资料都列到一篇文章里，以后不断更新。
+12.12.11 更新 ![截图](Pasted image 20221211203015.png) From: https://groups.google.com/g/v8-dev/c/J-lbjGeu6Yw
+The best way to start with V8 is to play around “hello world” at https://v8.dev/docs/embed to find out the basics. – 这篇是 v8 团队发的官方文章，大体上是讲怎么把 v8 当作嵌入式解释器使用，中间讲了很多 v8 的基本概念，入门必读。 Then, https://github.com/thlorenz/v8-perf/blob/master/README.md will give you some links to find out how V8 works internally - 包含介绍 v8 内部实现的很多内容，包括很多 v8 团队发布很多 talk 的视频和文档，我今天刚知道这个，还没仔细看 https://v8.dev/docs will explain some workflows to use. - 官方文档，也包括了 v8 个方面的内容，和第二个有一些内容是重复的，例如想了解 turbofan 可以看 https://v8.dev/docs/turbofan ，个人感觉第二个的导航做的更好一些。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+
+  <meta itemprop="name" content="v8 资料汇总">
+  <meta itemprop="description" content="V8 资料汇总 v8 的资料虽然很多，但是很多是非官方的资料，或者没有一个统一的所搜入口，今天在 v8-dev 用户组发现一个不错的帖子，里面包含一些我以前没搜到过的资料，我就想我干脆自己整理一份，把我觉得非常值得读的资料都列到一篇文章里，以后不断更新。
+12.12.11 更新 ![截图](Pasted image 20221211203015.png) From: https://groups.google.com/g/v8-dev/c/J-lbjGeu6Yw
+The best way to start with V8 is to play around “hello world” at https://v8.dev/docs/embed to find out the basics. – 这篇是 v8 团队发的官方文章，大体上是讲怎么把 v8 当作嵌入式解释器使用，中间讲了很多 v8 的基本概念，入门必读。 Then, https://github.com/thlorenz/v8-perf/blob/master/README.md will give you some links to find out how V8 works internally - 包含介绍 v8 内部实现的很多内容，包括很多 v8 团队发布很多 talk 的视频和文档，我今天刚知道这个，还没仔细看 https://v8.dev/docs will explain some workflows to use. - 官方文档，也包括了 v8 个方面的内容，和第二个有一些内容是重复的，例如想了解 turbofan 可以看 https://v8.dev/docs/turbofan ，个人感觉第二个的导航做的更好一些。">
+  <meta itemprop="wordCount" content="78">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="v8 资料汇总">
+  <meta name="twitter:description" content="V8 资料汇总 v8 的资料虽然很多，但是很多是非官方的资料，或者没有一个统一的所搜入口，今天在 v8-dev 用户组发现一个不错的帖子，里面包含一些我以前没搜到过的资料，我就想我干脆自己整理一份，把我觉得非常值得读的资料都列到一篇文章里，以后不断更新。
+12.12.11 更新 ![截图](Pasted image 20221211203015.png) From: https://groups.google.com/g/v8-dev/c/J-lbjGeu6Yw
+The best way to start with V8 is to play around “hello world” at https://v8.dev/docs/embed to find out the basics. – 这篇是 v8 团队发的官方文章，大体上是讲怎么把 v8 当作嵌入式解释器使用，中间讲了很多 v8 的基本概念，入门必读。 Then, https://github.com/thlorenz/v8-perf/blob/master/README.md will give you some links to find out how V8 works internally - 包含介绍 v8 内部实现的很多内容，包括很多 v8 团队发布很多 talk 的视频和文档，我今天刚知道这个，还没仔细看 https://v8.dev/docs will explain some workflows to use. - 官方文档，也包括了 v8 个方面的内容，和第二个有一些内容是重复的，例如想了解 turbofan 可以看 https://v8.dev/docs/turbofan ，个人感觉第二个的导航做的更好一些。">
+
+	
+  </head><body class="ma0 avenir bg-near-white development">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        My New Hugo Site
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      <div class="ananke-socials"></div>
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked ttu">
+          
+        Posts
+      </aside><div id="sharing" class="mt3 ananke-socials"></div>
+<h1 class="f1 athelas mt3 mb1">v8 资料汇总</h1>
+      
+      
+      
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><h2 id="v8-资料汇总">V8 资料汇总</h2>
+<p>v8 的资料虽然很多，但是很多是非官方的资料，或者没有一个统一的所搜入口，今天在 v8-dev 用户组发现一个不错的帖子，里面包含一些我以前没搜到过的资料，我就想我干脆自己整理一份，把我觉得非常值得读的资料都列到一篇文章里，以后不断更新。</p>
+<h3 id="121211-更新">12.12.11 更新</h3>
+<p>![截图](Pasted image 20221211203015.png)
+From: <a href="https://groups.google.com/g/v8-dev/c/J-lbjGeu6Yw">https://groups.google.com/g/v8-dev/c/J-lbjGeu6Yw</a></p>
+<ul>
+<li>The best way to start with V8 is to play around &ldquo;hello world&rdquo; at <a href="https://v8.dev/docs/embed">https://v8.dev/docs/embed</a> to find out the basics.   &ndash; 这篇是 v8 团队发的官方文章，大体上是讲怎么把 v8 当作嵌入式解释器使用，中间讲了很多 v8 的基本概念，入门必读。</li>
+<li>Then, <a href="https://github.com/thlorenz/v8-perf/blob/master/README.md">https://github.com/thlorenz/v8-perf/blob/master/README.md</a> will give you some links to find out how V8 works internally  - 包含介绍 v8 内部实现的很多内容，包括很多 v8 团队发布很多 talk 的视频和文档，我今天刚知道这个，还没仔细看</li>
+<li><a href="https://v8.dev/docs">https://v8.dev/docs</a> will explain some workflows to use. - 官方文档，也包括了 v8 个方面的内容，和第二个有一些内容是重复的，例如想了解 turbofan 可以看 <a href="https://v8.dev/docs/turbofan">https://v8.dev/docs/turbofan</a> ，个人感觉第二个的导航做的更好一些。</li>
+</ul>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://localhost:1313/" >
+    &copy;  My New Hugo Site 2024 
+  </a>
+    <div><div class="ananke-socials"></div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>

