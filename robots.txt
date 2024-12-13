@@ -1,2 +1,1 @@
 Sitemap: https://pwntips.github.io/sitemap.xml
-Sitemap: https://pwn.pp.ua/sitemap.xml

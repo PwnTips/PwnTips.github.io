@@ -3,12 +3,12 @@
 	"file": "style.css",
 	"sources": [
 		"style.scss",
-		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241210-104688-duael2/_sass/minima/skins/solarized.scss",
-		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241210-104688-duael2/_sass/minima/initialize.scss",
-		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241210-104688-duael2/_sass/minima/custom-variables.scss",
-		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241210-104688-duael2/_sass/minima/_base.scss",
-		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241210-104688-duael2/_sass/minima/_layout.scss",
-		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241210-104688-duael2/_sass/minima/custom-styles.scss"
+		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241213-106444-v3l427/_sass/minima/skins/solarized.scss",
+		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241213-106444-v3l427/_sass/minima/initialize.scss",
+		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241213-106444-v3l427/_sass/minima/custom-variables.scss",
+		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241213-106444-v3l427/_sass/minima/_base.scss",
+		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241213-106444-v3l427/_sass/minima/_layout.scss",
+		"C:/Users/MSI-NB/AppData/Local/Temp/jekyll-remote-theme-20241213-106444-v3l427/_sass/minima/custom-styles.scss"
 	],
 	"sourcesContent": [
 		"@import\n  \"minima/skins/solarized\",\n  \"minima/initialize\";\n",
