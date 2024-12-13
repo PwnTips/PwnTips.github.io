@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="https://pwntips.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pwntips.github.io/" rel="alternate" type="text/html" /><updated>2024-12-10T18:57:46+08:00</updated><id>https://pwntips.github.io/feed.xml</id><title type="html">PwnTips</title><subtitle>Tips &amp; Tricks</subtitle><entry><title type="html">分析 7zip 漏洞 CVE-2024-11147(WIP)</title><link href="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html" rel="alternate" type="text/html" title="分析 7zip 漏洞 CVE-2024-11147(WIP)" /><published>2024-12-10T00:00:00+08:00</published><updated>2024-12-10T00:00:00+08:00</updated><id>https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477</id><content type="html" xml:base="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html"><![CDATA[<p>查看 <a href="https://www.zerodayinitiative.com/advisories/ZDI-24-1532/">ZDI 公告</a> 提取到关键点：</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="https://pwntips.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pwntips.github.io/" rel="alternate" type="text/html" /><updated>2024-12-13T14:18:53+08:00</updated><id>https://pwntips.github.io/feed.xml</id><title type="html">PwnTips</title><subtitle>Tips &amp; Tricks</subtitle><entry><title type="html">分析 7zip 漏洞 CVE-2024-11147(WIP)</title><link href="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html" rel="alternate" type="text/html" title="分析 7zip 漏洞 CVE-2024-11147(WIP)" /><published>2024-12-10T00:00:00+08:00</published><updated>2024-12-10T00:00:00+08:00</updated><id>https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477</id><content type="html" xml:base="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html"><![CDATA[<p>分析一下 7zip 漏洞 CVE-2024-11477/ZDI-24-1532，查看 <a href="https://www.zerodayinitiative.com/advisories/ZDI-24-1532/">ZDI 公告</a> 提取到关键点：</p>
 <ul>
   <li>24.07 修复，之前的版本有问题：那么我们 DIFF 24.07 和 24.06 的代码</li>
   <li>漏洞出现在 <a href="https://en.wikipedia.org/wiki/Zstd">Zstandard</a> 解压的代码中</li>
@@ -221,7 +221,7 @@ litLen = k_SEQ_LL_BASES[litLen];
 	<span class="cp">#ifdef Z7_ZSTD_DEC_USE_64BIT_LOADS
 </span></code></pre></div></div>
 
-<p>虽然可以触发漏洞了，但是由于这两个数组都是 static 数组，存储在 7z.dll 的 .rdata 段的，越界读刚好可以读到其他只读数据，不会触发崩溃，一个不会触发崩溃的 POC，总感觉差点什么，接下来我们看看怎么才能触发崩溃。</p>
+<p>虽然可以触发漏洞了，但是由于这两个数组都是 static 数组，存储在 7z.dll 的 .rdata 段的，越界读刚好可以读到其他只读数据，不会触发崩溃，一个不会触发崩溃的 POC，总感觉差点什么，而且公告里说这个漏洞是可以造成一个 underflow 的，和我们分析的情况也明显不一样，所以接下来我们继续分析看怎么才能触发崩溃/ underflow。</p>
 
 <p><strong>未完待续</strong></p>
 
@@ -231,7 +231,7 @@ litLen = k_SEQ_LL_BASES[litLen];
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// CPP/7zip/Archive/ArchiveExports.cpp:50 
 static int FindFormatCalssId(const GUID *clsid) // Calss -&gt; Class
-</code></pre></div></div>]]></content><author><name></name></author><summary type="html"><![CDATA[查看 ZDI 公告 提取到关键点： 24.07 修复，之前的版本有问题：那么我们 DIFF 24.07 和 24.06 的代码 漏洞出现在 Zstandard 解压的代码中]]></summary></entry><entry><title type="html">分析 CVE-2022-1363</title><link href="https://pwntips.github.io/2023/05/07/CVE-2022-1364.html" rel="alternate" type="text/html" title="分析 CVE-2022-1363" /><published>2023-05-07T00:00:00+08:00</published><updated>2023-05-07T00:00:00+08:00</updated><id>https://pwntips.github.io/2023/05/07/CVE-2022-1364</id><content type="html" xml:base="https://pwntips.github.io/2023/05/07/CVE-2022-1364.html"><![CDATA[<p>从 https://googleprojectzero.github.io/0days-in-the-wild//0day-RCAs/2022/CVE-2022-1364.html 得到漏洞影响的 Chrome 版本以及 POC 代码。</p>
+</code></pre></div></div>]]></content><author><name></name></author><category term="7zip" /><category term="ZDI-24-1532" /><summary type="html"><![CDATA[分析一下 7zip 漏洞 CVE-2024-11477/ZDI-24-1532，查看 ZDI 公告 提取到关键点： 24.07 修复，之前的版本有问题：那么我们 DIFF 24.07 和 24.06 的代码 漏洞出现在 Zstandard 解压的代码中]]></summary></entry><entry><title type="html">分析 CVE-2022-1363</title><link href="https://pwntips.github.io/2023/05/07/CVE-2022-1364.html" rel="alternate" type="text/html" title="分析 CVE-2022-1363" /><published>2023-05-07T00:00:00+08:00</published><updated>2023-05-07T00:00:00+08:00</updated><id>https://pwntips.github.io/2023/05/07/CVE-2022-1364</id><content type="html" xml:base="https://pwntips.github.io/2023/05/07/CVE-2022-1364.html"><![CDATA[<p>从 https://googleprojectzero.github.io/0days-in-the-wild//0day-RCAs/2022/CVE-2022-1364.html 得到漏洞影响的 Chrome 版本以及 POC 代码。</p>
 
 <h2 id="复现">复现</h2>
 
