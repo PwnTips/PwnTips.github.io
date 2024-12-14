@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="https://pwntips.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pwntips.github.io/" rel="alternate" type="text/html" /><updated>2024-12-14T11:54:01+08:00</updated><id>https://pwntips.github.io/feed.xml</id><title type="html">PwnTips</title><subtitle>Tips &amp; Tricks</subtitle><entry><title type="html">分析 7zip 漏洞 CVE-2024-11147(WIP)</title><link href="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html" rel="alternate" type="text/html" title="分析 7zip 漏洞 CVE-2024-11147(WIP)" /><published>2024-12-10T00:00:00+08:00</published><updated>2024-12-10T00:00:00+08:00</updated><id>https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477</id><content type="html" xml:base="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html"><![CDATA[<p>分析一下 7zip 漏洞 CVE-2024-11477/ZDI-24-1532，查看 <a href="https://www.zerodayinitiative.com/advisories/ZDI-24-1532/">ZDI 公告</a> 提取到关键点：</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="https://pwntips.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pwntips.github.io/" rel="alternate" type="text/html" /><updated>2024-12-14T16:24:01+08:00</updated><id>https://pwntips.github.io/feed.xml</id><title type="html">PwnTips</title><subtitle>Tips &amp; Tricks</subtitle><entry><title type="html">分析 7zip 漏洞 CVE-2024-11147(WIP)</title><link href="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html" rel="alternate" type="text/html" title="分析 7zip 漏洞 CVE-2024-11147(WIP)" /><published>2024-12-10T00:00:00+08:00</published><updated>2024-12-10T00:00:00+08:00</updated><id>https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477</id><content type="html" xml:base="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html"><![CDATA[<p>分析一下 7zip 漏洞 CVE-2024-11477/ZDI-24-1532，查看 <a href="https://www.zerodayinitiative.com/advisories/ZDI-24-1532/">ZDI 公告</a> 提取到关键点：</p>
 <ul>
   <li>24.07 修复，之前的版本有问题：那么我们 DIFF 24.07 和 24.06 的代码</li>
   <li>漏洞出现在 <a href="https://en.wikipedia.org/wiki/Zstd">Zstandard</a> 解压的代码中</li>
@@ -3671,7 +3671,7 @@ RuntimeError: ..\..\third_party\node\win\node.exe ..\..\third_party\node\node_mo
 
 <h3 id="构建-1">构建</h3>
 
-<p>参考 <a href="./2022-03-20-build-chromium">墙内构建 Chromium</a> 用 GN 和 Ninja 执行构建。</p>
+<p>参考 <a href="/2022/03/20/build-chromium.html">墙内构建 Chromium</a>用 GN 和 Ninja 执行构建。</p>
 
 <h2 id="下载官方备份">下载官方备份</h2>
 
