@@ -59,7 +59,7 @@ tags: [Chromium, Pwn, v8]
 
 ### 构建
 
-参考 [墙内构建 Chromium](./2022-03-20-build-chromium) 用 GN 和 Ninja 执行构建。
+参考 [墙内构建 Chromium](2022-03-20-build-chromium.md)用 GN 和 Ninja 执行构建。
 
 ## 下载官方备份
 
