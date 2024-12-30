@@ -15,7 +15,7 @@ socks-proxy 127.0.0.1 10808
 
 或者在 Windows 版的 GUI OpenVPN 客户端上也是可以设置代理的。
 
-![](assets/images/Pasted%20image%2020241230180724.png)
+![](/assets/images/Pasted%20image%2020241230180724.png)
 
 设置了代理以后，连接速度稳定了很多，以前用 RDP 完全不能用，现在已经可以正常使用了，但是稍有延迟。
 
