@@ -68,7 +68,7 @@
 
 <p>或者在 Windows 版的 GUI OpenVPN 客户端上也是可以设置代理的。</p>
 
-<p><img src="assets/images/Pasted%20image%2020241230180724.png" alt="" /></p>
+<p><img src="/assets/images/Pasted%20image%2020241230180724.png" alt="" /></p>
 
 <p>设置了代理以后，连接速度稳定了很多，以前用 RDP 完全不能用，现在已经可以正常使用了，但是稍有延迟。</p>
 
@@ -77,7 +77,7 @@
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Mon Dec 30 16:36:09 2024 WARNING: Received unknown control message: * OFFSEC LABS NOTICE: Mon Dec 30 16:36:09 2024 WARNING: Received unknown control message: * Managing Universal VPN, please wait... Mon Dec 30 16:36:09 2024 Connection reset command was pushed by server ('')
 </code></pre></div></div>
 
-<p>目前搜到一个可能的解决方案 https://www.hardwork.cn/html/archives/category/openvpn， 说是 persist-tun 造成的，目前不确认是否这个问题，还在观望中。</p>
+<p>目前搜到一个可能的<a href="https://www.hardwork.cn/html/archives/381.html">解决方案</a>， 说是 persist-tun 配置造成的，目前不确认是否这个问题，还在观望中。</p>
 
 <p>因为这个问题，我现在都是连上 Universal VPN， 然后开一台机器测试一下能不能实际 PING 通，不能的话，就要重连几次，直到能 PING 通为止。但是只要连接成功以后，就可以稳定使用了。</p>
 
