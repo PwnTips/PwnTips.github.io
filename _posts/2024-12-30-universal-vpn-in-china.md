@@ -25,6 +25,6 @@ socks-proxy 127.0.0.1 10808
 Mon Dec 30 16:36:09 2024 WARNING: Received unknown control message: * OFFSEC LABS NOTICE: Mon Dec 30 16:36:09 2024 WARNING: Received unknown control message: * Managing Universal VPN, please wait... Mon Dec 30 16:36:09 2024 Connection reset command was pushed by server ('')
 ```
 
-目前搜到一个可能的解决方案 https://www.hardwork.cn/html/archives/category/openvpn， 说是 persist-tun 造成的，目前不确认是否这个问题，还在观望中。
+目前搜到一个可能的[解决方案](https://www.hardwork.cn/html/archives/381.html)， 说是 persist-tun 配置造成的，目前不确认是否这个问题，还在观望中。
 
 因为这个问题，我现在都是连上 Universal VPN， 然后开一台机器测试一下能不能实际 PING 通，不能的话，就要重连几次，直到能 PING 通为止。但是只要连接成功以后，就可以稳定使用了。
