@@ -1,4 +1,26 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="https://pwntips.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pwntips.github.io/" rel="alternate" type="text/html" /><updated>2024-12-14T16:24:01+08:00</updated><id>https://pwntips.github.io/feed.xml</id><title type="html">PwnTips</title><subtitle>Tips &amp; Tricks</subtitle><entry><title type="html">分析 7zip 漏洞 CVE-2024-11147(WIP)</title><link href="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html" rel="alternate" type="text/html" title="分析 7zip 漏洞 CVE-2024-11147(WIP)" /><published>2024-12-10T00:00:00+08:00</published><updated>2024-12-10T00:00:00+08:00</updated><id>https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477</id><content type="html" xml:base="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html"><![CDATA[<p>分析一下 7zip 漏洞 CVE-2024-11477/ZDI-24-1532，查看 <a href="https://www.zerodayinitiative.com/advisories/ZDI-24-1532/">ZDI 公告</a> 提取到关键点：</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="https://pwntips.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://pwntips.github.io/" rel="alternate" type="text/html" /><updated>2024-12-30T17:11:03+08:00</updated><id>https://pwntips.github.io/feed.xml</id><title type="html">PwnTips</title><subtitle>Tips &amp; Tricks</subtitle><entry><title type="html">在国内连接 OSCP 的 Universal VPN</title><link href="https://pwntips.github.io/2024/12/30/universal-vpn-in-china.html" rel="alternate" type="text/html" title="在国内连接 OSCP 的 Universal VPN" /><published>2024-12-30T00:00:00+08:00</published><updated>2024-12-30T00:00:00+08:00</updated><id>https://pwntips.github.io/2024/12/30/universal-vpn-in-china</id><content type="html" xml:base="https://pwntips.github.io/2024/12/30/universal-vpn-in-china.html"><![CDATA[<p>TLDR 版：openvpn 支持 socks5 代理，改一下配置，使用 socks5 代理连接 VPN 服务器。</p>
+
+<p>最近购买了 offsec 的 PEN 200/OSCP 课程，发现在国内连它的 Universal VPN 很不稳定，不用多说又是 GFW 的原因。</p>
+
+<p>最开始我是买了个国外的 VPS 上面装了 KALI，然后配合 SSH 端口转发使用，但是买的廉价 VPS 硬盘还有内存都比较小，还是各种不方便，就还是想解决一下，试了官方说的改网卡的 MTU，没什么效果，觉得还是要从墙的方向解决问题，就搜了一下，发现 OpenVPN 是支持 socks5 代理的，改一下配置文件就好。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>socks-proxy 127.0.0.1 10808
+</code></pre></div></div>
+
+<p>或者在 Windows 版的 GUI OpenVPN 客户端上也是可以设置代理的。</p>
+
+<p>![[assets/images/Pasted image 20241230165756.png]]</p>
+
+<p>设置了代理以后，连接速度稳定了很多，以前用 RDP 完全不能用，现在已经可以正常使用了，但是稍有延迟。</p>
+
+<p>但是还有个问题，每次进行第一次连接时很不稳定，要重连多次才能得到一个可用的连接。现象就是虽然 OpenVPN 连接成功但是，并不能 ping 通目标机器，Window 客户端的话托盘图标有时候会变成黄色，有时会有下面的提示信息：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Mon Dec 30 16:36:09 2024 WARNING: Received unknown control message: * OFFSEC LABS NOTICE: Mon Dec 30 16:36:09 2024 WARNING: Received unknown control message: * Managing Universal VPN, please wait... Mon Dec 30 16:36:09 2024 Connection reset command was pushed by server ('')
+</code></pre></div></div>
+
+<p>目前搜到一个可能的解决方案 https://www.hardwork.cn/html/archives/category/openvpn， 说是 persist-tun 造成的，目前不确认是否这个问题，还在观望中。</p>
+
+<p>因为这个问题，我现在都是连上 Universal VPN， 然后开一台机器测试一下能不能实际 PING 通，不能的话，就要重连几次，直到能 PING 通为止。但是只要连接成功以后，就可以稳定使用了。</p>]]></content><author><name></name></author><summary type="html"><![CDATA[TLDR 版：openvpn 支持 socks5 代理，改一下配置，使用 socks5 代理连接 VPN 服务器。]]></summary></entry><entry><title type="html">分析 7zip 漏洞 CVE-2024-11147(WIP)</title><link href="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html" rel="alternate" type="text/html" title="分析 7zip 漏洞 CVE-2024-11147(WIP)" /><published>2024-12-10T00:00:00+08:00</published><updated>2024-12-10T00:00:00+08:00</updated><id>https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477</id><content type="html" xml:base="https://pwntips.github.io/2024/12/10/7zip-CVE-2024-11477.html"><![CDATA[<p>分析一下 7zip 漏洞 CVE-2024-11477/ZDI-24-1532，查看 <a href="https://www.zerodayinitiative.com/advisories/ZDI-24-1532/">ZDI 公告</a> 提取到关键点：</p>
 <ul>
   <li>24.07 修复，之前的版本有问题：那么我们 DIFF 24.07 和 24.06 的代码</li>
   <li>漏洞出现在 <a href="https://en.wikipedia.org/wiki/Zstd">Zstandard</a> 解压的代码中</li>
@@ -3618,88 +3640,4 @@ Traceback (most recent call last):
 RuntimeError: ..\..\third_party\node\win\node.exe ..\..\third_party\node\node_modules\crisper\bin\crisper --source D:/chromium2/src/out/CVE-2020-6418/gen/chrome/browser/resources/settings/bundled\settings.html --script-in-head false --html D:/chromium2/src/out/CVE-2020-6418/gen/chrome/browser/resources/settings/bundled\vulcanized.html --js D:/chromium2/src/out/CVE-2020-6418/gen/chrome/browser/resources/settings/bundled\crisper.js failed: openssl config failed: error:25078067:DSO support routines:win32_load:could not load the shared library
 </code></pre></div></div>
 
-<p>出现这个错误是因为设置了 <code class="language-plaintext highlighter-rouge">OPENSSL_CONF</code> 环境变量，把这个环境变量置空可以解决。</p>]]></content><author><name></name></author><summary type="html"><![CDATA[lld-link: error: invalid timestamp: -2142000. Expected 32-bit integer]]></summary></entry><entry><title type="html">获取旧版本的 Chrome</title><link href="https://pwntips.github.io/2022/05/31/get-old-version-chrome-binary.html" rel="alternate" type="text/html" title="获取旧版本的 Chrome" /><published>2022-05-31T00:00:00+08:00</published><updated>2022-05-31T00:00:00+08:00</updated><id>https://pwntips.github.io/2022/05/31/get-old-version-chrome-binary</id><content type="html" xml:base="https://pwntips.github.io/2022/05/31/get-old-version-chrome-binary.html"><![CDATA[<p>复现 Chrome 漏洞肯定需要要先拿到受影响的旧版程序，本文记录两种获取任意版本 Chrome 文件的方法：</p>
-<ul>
-  <li>从源码构建，优点是可以得到 Debug 版的文件便于调试，缺点是需要花很长时间。</li>
-  <li>Chromium 团队维护了一份旧版 Chrome 的备份，包含调试符号，可以用来调试。缺点是备份只有 Release 版，且有部分版本是没有备份的，需要用临近版本替代。</li>
-</ul>
-
-<h2 id="构建">构建</h2>
-
-<p>构建方法参考了<a href="https://chromium.googlesource.com/chromium/src/+/master/docs/building_old_revisions.md">官方文档</a>和<a href="https://stackoverflow.com/questions/47087970/how-to-checkout-and-build-specific-chromium-tag-branch-without-download-the-full"> StackOverflow 上的回答</a>。</p>
-
-<h3 id="获取指定版本的源码">获取指定版本的源码</h3>
-
-<p>由于网络环境恶略，我只下载指定 Tag 的代码，不下载历史 Commit。
-网络环境好的话，可以去掉 <code class="language-plaintext highlighter-rouge">--deph 1</code> 选项，下载完整的 Commit 记录，避免不必要的问题。</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 把tags/ 和 chromium_ 后面的 Major.Minor.Patch.Build 形式的版本号替换成你需要的版本</span>
-<span class="o">&gt;</span> git fetch <span class="sb">`</span>
-<span class="o">&gt;</span>  https://chromium.googlesource.com/chromium/src.git <span class="sb">`</span>
-<span class="o">&gt;</span>  +refs/tags/59.0.3071.115:chromium_59.0.3071.115 <span class="nt">--depth</span> 1
-<span class="o">&gt;</span> git checkout tags/59.0.3071.115
-</code></pre></div></div>
-
-<hr />
-
-<p><strong>ℹ️NOTE</strong>: 构建脚本需要从上一个 Commit 获取时间戳，不下载历史 Commit 就需要在构建时手工修正这个时间戳，后面会介绍修正方法。</p>
-
-<hr />
-
-<h3 id="depot_tools-切换到对应的版本可选">depot_tools 切换到对应的版本（可选）</h3>
-
-<p>把 depot_tools 切换到和源码对应的版本，防止兼容性问题。</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># chrome 源码的时间戳</span>
-~/chrome/src <span class="o">&gt;</span> git log <span class="nt">-n</span> 1 <span class="nt">--pretty</span><span class="o">=</span>format:%ci
-</code></pre></div></div>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># depot_tools 切换到对应时间的 commit</span>
-~/depot_tools <span class="o">&gt;</span> git rev-list <span class="nt">-n</span> 1 <span class="nt">--before</span><span class="o">=</span><span class="s2">"上一步获取的时间戳"</span> main
-~/depot_tools <span class="o">&gt;</span> git checkout 上一步获取的 Commit
-<span class="c"># 禁用 depot_tools 自动更新</span>
-~/depot_tools <span class="o">&gt;</span> <span class="nv">$env</span>:DEPOT_TOOLS_UPDATE<span class="o">=</span>0
-</code></pre></div></div>
-
-<h3 id="同步依赖">同步依赖</h3>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 清理历史文件</span>
-<span class="o">&gt;</span> git clean <span class="nt">-ffd</span>
-<span class="c"># 下载依赖</span>
-<span class="o">&gt;</span> gclient syn <span class="nt">-D</span> <span class="nt">--force</span> <span class="nt">--reset</span>
-</code></pre></div></div>
-
-<h3 id="构建-1">构建</h3>
-
-<p>参考 <a href="/2022/03/20/build-chromium.html">墙内构建 Chromium</a>用 GN 和 Ninja 执行构建。</p>
-
-<h2 id="下载官方备份">下载官方备份</h2>
-
-<p>Google 也提供了旧版 Chrome 备份的下载，包括多个平台，而且包含调试符号，可以进行源码调试，唯一的缺点是只备份了 Release 版。</p>
-
-<h3 id="第三方工具">第三方工具</h3>
-
-<ul>
-  <li>直接在第三方工具 https://vikyd.github.io/download-chromium-history-version/ ，查找某个版本对应的镜像下载地址，下载地址都是 Google 官方的备份，可以放心使用。</li>
-  <li>同样功能的项目还有很多 https://github.com/Bugazelle/chromium-all-old-stable-versions</li>
-</ul>
-
-<h3 id="手工查找">手工查找</h3>
-
-<p>也可以按照 <a href="https://www.chromium.org/getting-involved/download-chromium/">官方文档</a>中介绍的方法手工查找下载地址：</p>
-
-<ul>
-  <li>(可选）在 <a href="https://chromereleases.googleblog.com/search/label/Stable%20updates">Chrome 发布记录</a> 查询到历史版本的完整版本号
-例如，搜索 “Chrome 76” 可以搜到 76.0.3809.87 的发布记录</li>
-  <li>利用 <a href="https://omahaproxy.appspot.com/">omahaproxy</a> 页面的 Version Information 功能，搜索版本号对应的 Position</li>
-  <li>在 <a href="https://commondatastorage.googleapis.com/chromium-browser-snapshots/index.html">commondatastorage</a> 页面，选择你的系统对应的目录
-例如，我选择 Win_x64</li>
-  <li>在 Filter 输入框中填入 Position
-    <ul>
-      <li>如果查到对应的目录，按需下载此目录内的文件即可
-例如：Chrome-win.zip（主程序）和 Chrome-win32-syms.zip（调试符号）</li>
-      <li>没找到说明此版本没有对应的备份，需要调整版本号，下载近似版本的备份</li>
-    </ul>
-  </li>
-  <li>上一节提到的工具，也是基于这个思路开发的，还有版本号模糊搜索的能力，推荐直接使用工具</li>
-</ul>]]></content><author><name></name></author><category term="Chromium" /><category term="Pwn" /><category term="v8" /><summary type="html"><![CDATA[复现 Chrome 漏洞肯定需要要先拿到受影响的旧版程序，本文记录两种获取任意版本 Chrome 文件的方法： 从源码构建，优点是可以得到 Debug 版的文件便于调试，缺点是需要花很长时间。 Chromium 团队维护了一份旧版 Chrome 的备份，包含调试符号，可以用来调试。缺点是备份只有 Release 版，且有部分版本是没有备份的，需要用临近版本替代。]]></summary></entry></feed>
+<p>出现这个错误是因为设置了 <code class="language-plaintext highlighter-rouge">OPENSSL_CONF</code> 环境变量，把这个环境变量置空可以解决。</p>]]></content><author><name></name></author><summary type="html"><![CDATA[lld-link: error: invalid timestamp: -2142000. Expected 32-bit integer]]></summary></entry></feed>

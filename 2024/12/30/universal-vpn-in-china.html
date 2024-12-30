@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>在国内连接 OSCP 的 Universal VPN | PwnTips</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="在国内连接 OSCP 的 Universal VPN" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="TLDR 版：openvpn 支持 socks5 代理，改一下配置，使用 socks5 代理连接 VPN 服务器。" />
+<meta property="og:description" content="TLDR 版：openvpn 支持 socks5 代理，改一下配置，使用 socks5 代理连接 VPN 服务器。" />
+<link rel="canonical" href="https://pwntips.github.io/2024/12/30/universal-vpn-in-china.html" />
+<meta property="og:url" content="https://pwntips.github.io/2024/12/30/universal-vpn-in-china.html" />
+<meta property="og:site_name" content="PwnTips" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-12-30T00:00:00+08:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="在国内连接 OSCP 的 Universal VPN" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2024-12-30T00:00:00+08:00","datePublished":"2024-12-30T00:00:00+08:00","description":"TLDR 版：openvpn 支持 socks5 代理，改一下配置，使用 socks5 代理连接 VPN 服务器。","headline":"在国内连接 OSCP 的 Universal VPN","mainEntityOfPage":{"@type":"WebPage","@id":"https://pwntips.github.io/2024/12/30/universal-vpn-in-china.html"},"url":"https://pwntips.github.io/2024/12/30/universal-vpn-in-china.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://pwntips.github.io/feed.xml" title="PwnTips" /><script async src="https://www.googletagmanager.com/gtag/js?id=G-LDS6Z1TT65"></script>
+<script>
+  window['ga-disable-G-LDS6Z1TT65'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){window.dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-LDS6Z1TT65');
+</script>
+
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">PwnTips</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">在国内连接 OSCP 的 Universal VPN</h1>
+    <p class="post-meta"><time class="dt-published" datetime="2024-12-30T00:00:00+08:00" itemprop="datePublished">
+        Dec 30, 2024
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>TLDR 版：openvpn 支持 socks5 代理，改一下配置，使用 socks5 代理连接 VPN 服务器。</p>
+
+<p>最近购买了 offsec 的 PEN 200/OSCP 课程，发现在国内连它的 Universal VPN 很不稳定，不用多说又是 GFW 的原因。</p>
+
+<p>最开始我是买了个国外的 VPS 上面装了 KALI，然后配合 SSH 端口转发使用，但是买的廉价 VPS 硬盘还有内存都比较小，还是各种不方便，就还是想解决一下，试了官方说的改网卡的 MTU，没什么效果，觉得还是要从墙的方向解决问题，就搜了一下，发现 OpenVPN 是支持 socks5 代理的，改一下配置文件就好。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>socks-proxy 127.0.0.1 10808
+</code></pre></div></div>
+
+<p>或者在 Windows 版的 GUI OpenVPN 客户端上也是可以设置代理的。</p>
+
+<p>![[assets/images/Pasted image 20241230165756.png]]</p>
+
+<p>设置了代理以后，连接速度稳定了很多，以前用 RDP 完全不能用，现在已经可以正常使用了，但是稍有延迟。</p>
+
+<p>但是还有个问题，每次进行第一次连接时很不稳定，要重连多次才能得到一个可用的连接。现象就是虽然 OpenVPN 连接成功但是，并不能 ping 通目标机器，Window 客户端的话托盘图标有时候会变成黄色，有时会有下面的提示信息：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Mon Dec 30 16:36:09 2024 WARNING: Received unknown control message: * OFFSEC LABS NOTICE: Mon Dec 30 16:36:09 2024 WARNING: Received unknown control message: * Managing Universal VPN, please wait... Mon Dec 30 16:36:09 2024 Connection reset command was pushed by server ('')
+</code></pre></div></div>
+
+<p>目前搜到一个可能的解决方案 https://www.hardwork.cn/html/archives/category/openvpn， 说是 persist-tun 造成的，目前不确认是否这个问题，还在观望中。</p>
+
+<p>因为这个问题，我现在都是连上 Universal VPN， 然后开一台机器测试一下能不能实际 PING 通，不能的话，就要重连几次，直到能 PING 通为止。但是只要连接成功以后，就可以稳定使用了。</p>
+
+  </div><div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = '';
+      this.page.identifier = 'https://pwntips.github.io/2024/12/30/universal-vpn-in-china.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://PwnTips.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript><a class="u-url" href="/2024/12/30/universal-vpn-in-china.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="https://pwntips.github.io/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Tips &amp; Tricks</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
