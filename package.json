@@ -1,0 +1,30 @@
+{
+  "name": "pwntips",
+  "version": "1.0.0",
+  "description": "Just another blog",
+  "homepage": "https://github.com/PwnTips/PwnTips.github.io#readme",
+  "bugs": {
+    "url": "https://github.com/PwnTips/PwnTips.github.io/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PwnTips/PwnTips.github.io.git"
+  },
+  "license": "ISC",
+  "author": "pwntips",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs",
+    "docs:deploy": "npm run docs:build && cp -r docs/.vuepress/dist/* . && git add . && git commit -m 'Deploy VuePress site' && git push"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "@vuepress/bundler-vite": "^2.0.0-rc.24",
+    "@vuepress/theme-default": "^2.0.0-rc.112",
+    "playwright": "^1.55.1",
+    "sass-embedded": "^1.93.2",
+    "vuepress": "^2.0.0-rc.24"
+  }
+}
