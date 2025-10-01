@@ -5,7 +5,7 @@ import { viteBundler } from '@vuepress/bundler-vite'
 export default defineUserConfig({
   title: 'PWN-Tips',
   description: '一些笔记',
-  base: '/', // Root path for user/organization GitHub Pages
+  base: '/', // Root path for custom domain
   bundler: viteBundler(),
   theme: defaultTheme({
     navbar: [],
