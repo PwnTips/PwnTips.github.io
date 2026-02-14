@@ -22,7 +22,9 @@
   "devDependencies": {
     "@playwright/test": "^1.55.1",
     "@vuepress/bundler-vite": "^2.0.0-rc.24",
+    "@vuepress/plugin-sitemap": "^2.0.0-rc.112",
     "@vuepress/theme-default": "^2.0.0-rc.112",
+    "baseline-browser-mapping": "^2.9.19",
     "playwright": "^1.55.1",
     "sass-embedded": "^1.93.2",
     "vuepress": "^2.0.0-rc.24"
