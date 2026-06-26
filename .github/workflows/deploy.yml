@@ -31,6 +31,12 @@ jobs:
         uses: actions/configure-pages@v4
       - name: Install dependencies
         run: npm ci
+      - name: Sync root assets for VuePress
+        run: |
+          mkdir -p docs/.vuepress/public/assets/images
+          if [ -d assets/images ]; then
+            cp -a assets/images/. docs/.vuepress/public/assets/images/
+          fi
       - name: Build with VuePress
         run: npm run docs:build
       - name: Upload artifact
